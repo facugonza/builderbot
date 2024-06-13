@@ -21,7 +21,7 @@ function addLog(telefono, accion) {
                 logger.error('Error al insertar en la base de datos', error);
                 return;
             }
-            logger.log('Registro insertado:', results.insertId);
+            logger.log('Registro insertado: >' + telefono + "< / " + accion + " : # ", results.insertId);
         });
     }catch(error){
         logger.error(error);

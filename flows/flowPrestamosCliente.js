@@ -108,7 +108,7 @@ const flowPrestamosCliente = addKeyword("PRESTAMO", { sensitive: false })
                 console.log("PSAE EL FLOW DINAMYC"); 
 
                 const clienteData = getClienteData(ctx);
-                const resultado = await servicePrestamos.calcularFinanciacion(
+                const resultado = await calcularFinanciacion(
                     clienteData.capitalSolicitado, 
                     clienteData.cuotas, 
                     clienteData.diavencimiento

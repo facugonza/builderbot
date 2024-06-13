@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import { join } from 'path'
 import { createBot, createProvider, createFlow, addKeyword, utils } from '@builderbot/bot'
 import { MemoryDB as Database } from '@builderbot/bot'
@@ -19,7 +22,8 @@ import flowDisponible from "../flows/flowDisponible.js";
 import flowMovimientos from "../flows/flowCompras.js";
 import flowLinkPagoMP from "../flows/flowLinkPagoMP.js";
 
-
+//process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
+import https from 'https';
 
 //const { createBot, createProvider, createFlow, addKeyword } = require('@bot-whatsapp/bot')
 //import { MysqlDB } from '@builderbot/database-mysql'
@@ -61,7 +65,7 @@ const main = async () => {
         provider: adapterProvider,
         database: adapterDB,
     })
-
+    /*
     adapterProvider.server.post(
         '/v1/messages',
         handleCtx(async (bot, req, res) => {
@@ -100,7 +104,7 @@ const main = async () => {
             return res.end(JSON.stringify({ status: 'ok', number, intent }))
         })
     )
-
+    */
     httpServer(+PORT)    
 }
 

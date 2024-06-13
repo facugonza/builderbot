@@ -1,10 +1,15 @@
 import { addKeyword } from '@builderbot/bot';
 import nodemailer from "nodemailer";
-//import { downloadMediaMessage } from '@whiskeysockets/baileys'
-import { writeFileSync, readFileSync } from "fs";
+//import { downloadMediaMessage } from '@whiskeysockets/baileys';
+import { writeFileSync, existsSync, mkdirSync } from "fs";
 import { logger, emailLogger } from '../logger/logger.js';
 import databaseLogger from '../logger/databaseLogger.js';
 import acciones from '../models/acciones.js';
+import { BaileysProvider  } from '@builderbot/provider-baileys'
+
+//import builderbotProvider from '@builderbot/provider-baileys';  // Importar el paquete completo
+//const { saveFile } = builderbotProvider;  // Extraer la función necesaria
+//import { saveFile } from '@builderbot/provider-baileys'
 
 let lead = {
   nombre: "",
@@ -62,9 +67,15 @@ async function sendEmail(files) {
 
 
 async function createDirectoryIfNotExists(directory) {
-  if (!fs.existsSync(directory)) {
-    fs.mkdirSync(directory);
+  try{
+    if (!existsSync(directory)) {
+      mkdirSync(directory);
+    }
+  }catch(error){
+    console.log(error);
+    emailLogger.error("ERROR createDirectoryIfNotExists :",error);
   }
+
 }
 
 function capturarRespuesta(ctx, fallBack, campo) {
@@ -150,9 +161,9 @@ const flowAltaCliente = addKeyword("solicitar" , {sensitive : false})
       const userImagesDirectory = "./clientes/"+ctx.from; 
       await createDirectoryIfNotExists(userImagesDirectory);        
       try{
-        //const buffer = await downloadMediaMessage(ctx, "buffer");
+        //const buffer = await BaileysProvider.saveFile (ctx, "buffer");
         //await writeFileSync(userImagesDirectory+"/dni-frente.jpeg", buffer);
-        //console.log("FRENTE DNI > ");
+        console.log("FRENTE DNI > ");
         return;
       }catch(error){
         console.log("FRENTE DNI ERRO > " + error);
@@ -167,7 +178,7 @@ const flowAltaCliente = addKeyword("solicitar" , {sensitive : false})
       const userImagesDirectory = "./clientes/"+ctx.from; 
       await createDirectoryIfNotExists(userImagesDirectory);        
       try{
-        //const buffer = await downloadMediaMessage(ctx, "buffer");
+        //const buffer = await BaileysProvider.saveFile(ctx, "buffer");
         //writeFileSync(userImagesDirectory+"/dni-dorso.jpeg", buffer);
         console.log("FRENTE DORSO > ");
         return; 
@@ -181,7 +192,7 @@ const flowAltaCliente = addKeyword("solicitar" , {sensitive : false})
     {capture : true},
     async (ctx,{fallBack}) => {  
       try{
-        //const buffer = await downloadMediaMessage(ctx, "buffer");
+        //const buffer = await BaileysProvider.saveFile(ctx, "buffer");
         //await writeFileSync("./clientes/"+ctx.from+"/boleta-servicio.jpeg", buffer);
       }catch(error){
         return fallBack("Ocurrio un error , por favor reintenta !! " + error);
@@ -193,7 +204,7 @@ const flowAltaCliente = addKeyword("solicitar" , {sensitive : false})
     {capture : true},
     async (ctx,{fallBack}) => {  
       try{
-        //const buffer = await downloadMediaMessage(ctx, "buffer");
+        //const buffer = await BaileysProvider.saveFile(ctx, "buffer");
         //await writeFileSync("./clientes/"+ctx.from+"/certificado-ingresos.jpeg", buffer);
       }catch(error){
         return fallBack("Ocurrio un error , por favor reintenta !! " + error);

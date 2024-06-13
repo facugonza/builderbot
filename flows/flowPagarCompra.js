@@ -1,7 +1,9 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import { addKeyword, EVENTS } from '@builderbot/bot';
 import { logger, emailLogger } from '../logger/logger.js';
 import axios from "axios";
-import dotenv from "dotenv";
 import {setClienteData } from "../models/clienteDATA.js";
 //import { downloadMediaMessage } from '@builderbot/provider-baileys'
 //import { writeFileSync, readFileSync } from "fs";
