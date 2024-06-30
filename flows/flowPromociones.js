@@ -1,7 +1,7 @@
 import { addKeyword } from '@builderbot/bot';
 import { setClienteData } from "../models/clienteDATA.js";
 import GoogleSheetService from '../services/promos/index.js'; // Ajusta la ruta según sea necesario
-
+import { logger, emailLogger } from '../logger/logger.js';
 import databaseLogger from '../logger/databaseLogger.js';
 import acciones from '../models/acciones.js';
 
@@ -29,7 +29,8 @@ const flowPromociones = addKeyword("promo")
     setClienteData(ctx, {});
     return endFlow("Si tienes más preguntas o necesitas ayuda, no dudes en contactarme nuevamente. *Tenes suerte .. Tenes DATA !!*");
   } catch (error) {
-    console.log("ERROR ; " + error);
+    logger.error("ERROR flowPromociones > " + error.stack );
+    emailLogger.error("ERROR flowPromociones > " + error.stack );
   }
 });
 

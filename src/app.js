@@ -1,7 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import { join } from 'path'
 import { createBot, createProvider, createFlow, addKeyword, utils } from '@builderbot/bot'
 import { MemoryDB as Database } from '@builderbot/bot'
 import { BaileysProvider as Provider } from '@builderbot/provider-baileys'
@@ -43,6 +42,7 @@ const MYSQL_DB_PORT = "3306";
 //global.cliente ={};
 
 const main = async () => {
+    
     //const adapterDBMock = new MockAdapter();
     /*
     const adapterDB = new MysqlDB({
@@ -65,16 +65,21 @@ const main = async () => {
         provider: adapterProvider,
         database: adapterDB,
     })
+    
     /*
     adapterProvider.server.post(
         '/v1/messages',
         handleCtx(async (bot, req, res) => {
-            const { number, message, urlMedia } = req.body
+            const  number = "5492644736151";
+            const  message = "DATABOT ALIVE";
+            urlMedia= null;
+            //const { number, message, urlMedia } = req.body
             await bot.sendMessage(number, message, { media: urlMedia ?? null })
             return res.end('sended')
         })
     )
-
+    */
+    /*
     adapterProvider.server.post(
         '/v1/register',
         handleCtx(async (bot, req, res) => {
@@ -105,7 +110,26 @@ const main = async () => {
         })
     )
     */
+    adapterProvider.server.get('/health', (req, res) => {
+        const  number = "5492644736151";
+        const  message = "DATABOT ALIVE";
+        try{
+            console.log("SENDING MESSAGE TO : " + number);
+            adapterProvider.sendMessage(number, message, { media: null });
+            console.log("MESSAGE SENT: " + "DATABOT ALIVE"  + " to "+ number);
+    
+            res.writeHead(200, { 'Content-Type': 'text/plain' });
+            res.end('OK');
+        }catch(error){
+            res.writeHead(503, { 'Content-Type': 'text/plain' });
+            res.end('FAIL');
+        }
+    });
+    
     httpServer(+PORT)    
+
+
+    
 }
 
 

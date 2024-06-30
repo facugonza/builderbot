@@ -17,11 +17,13 @@ const isRegisterClient = async (phoneNumber) => {
             method: "get",
             url: API_URL_VERIFICAR_TELEFONO + phoneNumber,
             headers: {},
+            timeout: 30000
         };
 
         const response = await axios(config);
         return response.data;
     } catch (e) {
+        console.log(e);
         emailLogger.error("ERROR en isRegisterClient > "+ e.stack);
         return null;
     }
@@ -38,11 +40,13 @@ const findCustomer = async (ctx) => {
                 method: "get",
                 url: url + ctx.from,
                 headers: {},
+                timeout: 30000
             };
             const response = await axios(config);
             return response.data;
         } catch (e) {
             emailLogger.error("ERROR en makeRequest > " + e.stack);
+            console.log(e);
             return null;
         }
     }
@@ -62,7 +66,7 @@ const findCustomer = async (ctx) => {
         } else {
             cliente = {}; // Asegurarse de devolver un objeto vacío si no se encontraron datos
         }
-    }
+    }   
 
     return cliente; // Devuelve el objeto cliente, que puede estar lleno o vacío
 };

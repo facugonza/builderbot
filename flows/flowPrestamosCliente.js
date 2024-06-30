@@ -57,7 +57,7 @@ const flowPrestamosCliente = addKeyword("PRESTAMO", { sensitive: false })
             }
         }
       }catch(error){
-        logger.error("Error validando el monto ingresado en la simulacion del prestamo :", error);
+        logger.error("Error validando el monto ingresado en la simulacion del prestamo :", error.stack);
       }
     }
   )
@@ -79,7 +79,7 @@ const flowPrestamosCliente = addKeyword("PRESTAMO", { sensitive: false })
             });
             await flowDynamic([{ body: mensajeCuotas }]);
         } catch (error) {
-            emailLogger.error("Error al obtener cuotas habilitadas:", error);
+            emailLogger.error("Error al obtener cuotas habilitadas:", error.stack);
             return endFlow("*Lo siento, ocurrió un error al obtener las cuotas disponibles. Por favor, inténtalo de nuevo más tarde.*");            
             
         }
@@ -127,11 +127,15 @@ const flowPrestamosCliente = addKeyword("PRESTAMO", { sensitive: false })
                 
                 clienteData.detallesFinanciacion = detallesFinanciacion; 
                 setClienteData(ctx, clienteData);
+                if (ctx.from === "54264736151" || ctx.from === "549264481-4441"){ 
 
-                return endFlow("Acercate a nuestra Sucursal mas cercana.*\n *SUJETO A EVALUACION* \n *Tenes suerte .. Tenes DATA !!*");
+                } else {
+                  return endFlow("Acercate a nuestra Sucursal mas cercana.*\n *SUJETO A EVALUACION* \n *Tenes suerte .. Tenes DATA !!*");
+                } 
+                
 
             } catch (error) {
-                emailLogger.error("Error al calcular la financiación:", error);
+                emailLogger.error("Error al calcular la financiación:", error.stack);
                 //await flowDynamic([{ body: "*Lo siento, ocurrió un error al calcular la financiación. Por favor, inténtalo de nuevo más tarde.....*" }]);
                 return endFlow("*Lo siento, ocurrió un error al calcular la financiación. Por favor, inténtalo de nuevo más tarde.....*");
             }
