@@ -2,7 +2,7 @@
 //const fs = require('fs');
 import axios from 'axios';
 import https from 'https';
-import { emailLogger } from '../../logger/logger.js';
+import { emailLogger,logger } from '../../logger/logger.js';
 
 const axiosInstance = axios.create({
     httpsAgent: new https.Agent({  
@@ -79,6 +79,7 @@ async function calcularFinanciacion(capital, cuotas, vencimiento) {
 
 async function otorgarPrestamo(tarjeta, digito, version, adicional, capital, cuotas) {
     try {
+        logger.info("POR OTORGAR PRESTAMOS CON LOS SIGUIENTES DATOS > tarjeta, digito, version, adicional, capital, cuotas > " , tarjeta, digito, version, adicional, capital, cuotas);
         const data = {
             tarjeta: tarjeta,
             digito: digito,
@@ -89,10 +90,11 @@ async function otorgarPrestamo(tarjeta, digito, version, adicional, capital, cuo
         };
 
         const response = await axiosInstance.post(`${API_BASE_URL}/insertar/sinbaja`, data, { headers: API_HEADERS });
-        console.log("Respuesta del servidor al otorgar el préstamo:", response.data);
+        logger.info(" >> RESPUESTA EN OTORGAR PRESTAMO > ", response.data);
         return response.data;
     } catch (error) {
-        emailLogger.error('Error al otorgar el préstamo:', error);
+        emailLogger.error('Error al otorgar el préstamo:', error.stack);
+        logger.error('Error al otorgar el préstamo:', error.stack);
         throw error;
     }
 }
