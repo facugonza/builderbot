@@ -7,8 +7,8 @@ import { getClienteData} from "../../models/clienteDATA.js";
 import {setClienteData } from "../../models/clienteDATA.js";
 
 
-const API_URL_VERIFICAR_TELEFONO ="http://www.dataseguro.com.ar/AppMovil/Cliente?nroTelefono=";
-const API_URL_VERIFICAR_TELEFONO_BKP ="http://200.70.56.203:8021/AppMovil/Cliente?nroTelefono=";
+const API_URL_VERIFICAR_TELEFONO ="http://200.70.56.203:8021/AppMovil/Cliente?nroTelefono=";
+const API_URL_VERIFICAR_TELEFONO_BKP ="http://200.70.56.202:8080/AppMovil/Cliente?nroTelefono=";
 
 
 const isRegisterClient = async (phoneNumber) => {

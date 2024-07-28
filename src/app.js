@@ -114,9 +114,9 @@ const main = async () => {
         const  number = "5492644736151";
         const  message = "DATABOT ALIVE";
         try{
-            console.log("SENDING MESSAGE TO : " + number);
-            adapterProvider.sendMessage(number, message, { media: null });
-            console.log("MESSAGE SENT: " + "DATABOT ALIVE"  + " to "+ number);
+            //console.log("SENDING MESSAGE TO : " + number);
+            //adapterProvider.sendMessage(number, message, { media: null });
+            //console.log("MESSAGE SENT: " + "DATABOT ALIVE"  + " to "+ number);
     
             res.writeHead(200, { 'Content-Type': 'text/plain' });
             res.end('OK');
@@ -126,10 +126,14 @@ const main = async () => {
         }
     });
     
-    httpServer(+PORT)    
-
-
-    
+    httpServer(+PORT);   
+    try{
+        const  number = "5492644736151";
+        const  message = "DATABOT STARTING";        
+        adapterProvider.sendMessage(number, message, { media: null });
+    }catch(error){
+        console.error(error.stack);
+    }
 }
 
 

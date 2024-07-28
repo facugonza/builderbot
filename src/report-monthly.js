@@ -6,11 +6,11 @@
 //const path = require('path');
 //const CronJob = require('cron').CronJob;
 
-import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
-import fs from 'fs';
-import path from 'path';
-import { CronJob } from 'cron';
-import mysql from 'mysql';
+//import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
+//import fs from 'fs';
+//import path from 'path';
+//import { CronJob } from 'cron';
+import mysql from 'mysql2';
 import nodemailer from 'nodemailer';
 
 
@@ -31,7 +31,7 @@ function sendEmail() {
     database: 'databot'
   });
 
-
+  /*
   function  generatePieChart(data) {
     const width = 400; // Ancho de la imagen del gráfico
     const height = 400; // Alto de la imagen del gráfico
@@ -88,6 +88,7 @@ function sendEmail() {
     return chartJSNodeCanvas.renderToBuffer(configuration);
   }
 
+  */
   connection.connect();
 
   // Consulta SQL para obtener el detalle de los teléfonos y la cantidad de mensajes
@@ -96,14 +97,14 @@ function sendEmail() {
   FROM (
       SELECT phone, COUNT(*) AS message_count , Date(creationDate) as fecha 
       FROM history
-      WHERE DATE(creationDate) BETWEEN '2024-04-01' AND '2024-04-30'
+      WHERE DATE(creationDate) BETWEEN '2024-05-25' AND '2024-06-30'
       GROUP BY phone,fecha
   
       UNION ALL
   
       SELECT telefono AS phone, COUNT(*) AS message_count , date(fecha_hora) as fecha
       FROM messages
-      WHERE DATE(fecha_hora) BETWEEN '2024-04-01' AND '2024-04-30'
+      WHERE DATE(fecha_hora) BETWEEN '2024-05-25' AND '2024-06-30'
       GROUP BY telefono,fecha
   ) AS combined
   GROUP BY phone,fecha
@@ -136,7 +137,7 @@ FROM (
         0 AS 'Solicitar_Count',
         0 AS 'Requisitos_Count'
     FROM history
-    WHERE DATE(creationDate) BETWEEN '2024-04-01' AND '2024-04-30'
+    WHERE DATE(creationDate) BETWEEN '2024-05-25' AND '2024-06-30'
     AND answer NOT LIKE '%-* Consultar tu saldo disponible%'
     AND answer NOT LIKE '%Obteniendo tu ultimo resumen generado con vencimiento%'
     AND answer NOT LIKE '%Resumen N°%'
@@ -157,7 +158,7 @@ FROM (
         SUM(accion = 'SOLICITAR') AS 'Solicitar_Count',
         SUM(accion = 'REQUISITOS') AS 'Requisitos_Count'
     FROM messages
-    WHERE DATE(fecha_hora) BETWEEN '2024-04-01' AND '2024-04-30'
+    WHERE DATE(fecha_hora) BETWEEN '2024-05-25' AND '2024-06-30'
 ) AS combined_results;
 `;
 
@@ -203,9 +204,9 @@ FROM (
 
       emailContent += '</table>';
 
-      const imageBuffer = await generatePieChart(dataSource);
-      const imagePath = path.join(__dirname, 'chart.png');
-      fs.writeFileSync(imagePath, imageBuffer);
+      //const imageBuffer = await generatePieChart(dataSource);
+      //const imagePath = path.join(__dirname, 'chart.png');
+      //fs.writeFileSync(imagePath, imageBuffer);
 
       // Crear la tabla de detalles
       emailContent += '<h3>Detalle de números de teléfonos: </strong></h3>';
@@ -234,12 +235,14 @@ FROM (
       const mailOptions = {
         from: 'facundogonzalez@tarjetadata.com.ar',
         to: 'facugonza@gmail.com',
-        subject:  '02-2024', //`Cantidad de Personas Atendidas hoy: (${todayDate})`,
-        html: emailContent,
+        subject:  'Resumen DATABOT mensual 06-2024', //`Cantidad de Personas Atendidas hoy: (${todayDate})`,
+        html: emailContent
+        /*
         attachments: [{
           filename: 'databot-resumen-mensual.png',
           path: imagePath // Adjuntamos la imagen desde la ruta del archivo
         }]
+          */
       };
 
       // Enviar el correo electrónico
@@ -258,6 +261,7 @@ FROM (
 if (process.argv[2] === 'run') {
   sendEmail();
 } else {
+  /*
   // Crear un nuevo trabajo cron que se ejecuta el último día de cada mes a las 23:59
   const job = new CronJob(
     '0 59 23 L * *',
@@ -271,7 +275,7 @@ if (process.argv[2] === 'run') {
   );
 
   job.start();
-
+  */
 }
 
 console.log('Tarea cron programada para las 23:59 del último día de cada mes.');
