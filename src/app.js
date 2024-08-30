@@ -1,5 +1,13 @@
 import dotenv from "dotenv";
-dotenv.config();
+import path from "path";
+import { fileURLToPath } from 'url';
+
+// Convertir import.meta.url a __dirname equivalente
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Carga el archivo .env desde la raíz del proyecto
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 import { createBot, createProvider, createFlow, addKeyword, utils } from '@builderbot/bot'
 import { MemoryDB as Database } from '@builderbot/bot'

@@ -97,14 +97,14 @@ function sendEmail() {
   FROM (
       SELECT phone, COUNT(*) AS message_count , Date(creationDate) as fecha 
       FROM history
-      WHERE DATE(creationDate) BETWEEN '2024-05-25' AND '2024-06-30'
+      WHERE DATE(creationDate) BETWEEN '2024-07-01' AND '2024-07-31'
       GROUP BY phone,fecha
   
       UNION ALL
   
       SELECT telefono AS phone, COUNT(*) AS message_count , date(fecha_hora) as fecha
       FROM messages
-      WHERE DATE(fecha_hora) BETWEEN '2024-05-25' AND '2024-06-30'
+      WHERE DATE(fecha_hora) BETWEEN '2024-07-01' AND '2024-07-31'
       GROUP BY telefono,fecha
   ) AS combined
   GROUP BY phone,fecha
@@ -137,7 +137,7 @@ FROM (
         0 AS 'Solicitar_Count',
         0 AS 'Requisitos_Count'
     FROM history
-    WHERE DATE(creationDate) BETWEEN '2024-05-25' AND '2024-06-30'
+    WHERE DATE(creationDate) BETWEEN '2024-07-01' AND '2024-07-31'
     AND answer NOT LIKE '%-* Consultar tu saldo disponible%'
     AND answer NOT LIKE '%Obteniendo tu ultimo resumen generado con vencimiento%'
     AND answer NOT LIKE '%Resumen N°%'
@@ -158,7 +158,7 @@ FROM (
         SUM(accion = 'SOLICITAR') AS 'Solicitar_Count',
         SUM(accion = 'REQUISITOS') AS 'Requisitos_Count'
     FROM messages
-    WHERE DATE(fecha_hora) BETWEEN '2024-05-25' AND '2024-06-30'
+    WHERE DATE(fecha_hora) BETWEEN '2024-07-01' AND '2024-07-31'
 ) AS combined_results;
 `;
 
@@ -221,12 +221,12 @@ FROM (
 
       // Configurar el transporte de correo
       const transporter = nodemailer.createTransport({
-        host: 'sd-1973625-l.dattaweb.com',
+        host: 'sd-1973625-l.dattaweb.com', 
         port: 587,
         secure: false,
         auth: {
           user: 'facundogonzalez@tarjetadata.com.ar',
-          pass: 'Facundo123',
+          pass: 'Facundo2000@*',
         }
       });
 
@@ -235,7 +235,7 @@ FROM (
       const mailOptions = {
         from: 'facundogonzalez@tarjetadata.com.ar',
         to: 'facugonza@gmail.com',
-        subject:  'Resumen DATABOT mensual 06-2024', //`Cantidad de Personas Atendidas hoy: (${todayDate})`,
+        subject:  'Resumen DATABOT mensual 07-2024', //`Cantidad de Personas Atendidas hoy: (${todayDate})`,
         html: emailContent
         /*
         attachments: [{

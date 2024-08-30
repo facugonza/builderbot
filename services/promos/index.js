@@ -1,11 +1,14 @@
+//import dotenv from "dotenv";
+//dotenv.config();
+
+console.log("GOOGLE_SERVICE_ACCOUNT_EMAIL   >" + process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL);
+console.log("process.env.GOOGLE_PRIVATE_KEY >"+process.env.GOOGLE_PRIVATE_KEY);
+
 //import { JWT } from "google-auth-library";
 //import { GoogleSpreadsheet } from "google-spreadsheet";
 import { JWT } from 'google-auth-library';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { logger, emailLogger } from '../../logger/logger.js';
-import dotenv from "dotenv";
-dotenv.config();
-
 
 
 const SCOPES = [
@@ -14,6 +17,7 @@ const SCOPES = [
 ];
 
 class GoogleSheetService {
+  
   jwtFromEnv = undefined;
   doc = undefined;
 

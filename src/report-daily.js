@@ -93,7 +93,7 @@ function sendEmail() {
         secure: false,
         auth: {
           user: 'facundogonzalez@tarjetadata.com.ar',
-          pass: 'Facundo123',
+          pass: 'Facundo2000@*',
         }
       });
 

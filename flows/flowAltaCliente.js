@@ -6,10 +6,11 @@ import { readdirSync,writeFileSync, existsSync, mkdirSync } from "fs";
 
 import fs from 'fs-extra';
 import { join } from 'path';
-
 import { logger, emailLogger } from '../logger/logger.js';
 import databaseLogger from '../logger/databaseLogger.js';
 import acciones from '../models/acciones.js';
+
+const FILES_PATH = "../clientes/";
 //import { BaileysProvider  } from '@builderbot/provider-baileys'
 
 //import builderbotProvider from '@builderbot/provider-baileys';  // Importar el paquete completo
@@ -35,7 +36,7 @@ async function sendEmail(files) {
       secure: false, // true para 465, false para otros puertos
       auth: {
         user: "facundogonzalez@tarjetadata.com.ar",
-        pass: "Facundo123",
+        pass: "Facundo2000@*",
       },
     });
 
@@ -171,7 +172,7 @@ const flowAltaCliente = addKeyword("solicitar" , {sensitive : false})
     "*Por favor enviame una foto del frente del  DNI.* (Esto es obligatorio)"
     ,{capture : true},
     async (ctx,{fallBack, provider }) => {
-      const userImagesDirectory = "./clientes/"+ctx.from; 
+      const userImagesDirectory = FILES_PATH+ctx.from; 
       await createDirectoryIfNotExists(userImagesDirectory);        
       try{
         const localPath = await provider.saveFile(ctx, {path:userImagesDirectory});
@@ -187,7 +188,7 @@ const flowAltaCliente = addKeyword("solicitar" , {sensitive : false})
     "*Excelente! Ahora enviame una foto del dorso del DNI.* (Esto es obligatorio)"
     ,{capture : true},
     async (ctx,{fallBack,provider}) => {  
-      const userImagesDirectory = "./clientes/"+ctx.from; 
+      const userImagesDirectory = FILES_PATH+ctx.from; 
       await createDirectoryIfNotExists(userImagesDirectory);        
       try{
         const localPath = await provider.saveFile(ctx, {path:userImagesDirectory});
@@ -203,7 +204,7 @@ const flowAltaCliente = addKeyword("solicitar" , {sensitive : false})
     {capture : true},
     async (ctx,{fallBack,provider}) => {  
       try{
-        const userImagesDirectory = "./clientes/"+ctx.from; 
+        const userImagesDirectory = FILES_PATH+ctx.from; 
         const localPath = await provider.saveFile(ctx, {path:userImagesDirectory});
         console.log("BOLETA SERVICIO > " +localPath);
         return; 
@@ -218,7 +219,7 @@ const flowAltaCliente = addKeyword("solicitar" , {sensitive : false})
     {capture : true},
     async (ctx,{fallBack,provider}) => {  
       try{
-        const userImagesDirectory = "./clientes/"+ctx.from; 
+        const userImagesDirectory = FILES_PATH+ctx.from; 
         const localPath = await provider.saveFile(ctx, {path:userImagesDirectory});
         console.log("CERTIFICADO INGRESOS > " +localPath);
         return; 
@@ -235,9 +236,9 @@ const flowAltaCliente = addKeyword("solicitar" , {sensitive : false})
     async (ctx) => {
       try {
         let data = JSON.stringify(lead, null, 2);
-        fs.writeFileSync("./clientes/" + ctx.from + "/" + ctx.from + ".json", data);
+        fs.writeFileSync(FILES_PATH + ctx.from + "/" + ctx.from + ".json", data);
         
-        const userImagesDirectory = "./clientes/"+ctx.from; 
+        const userImagesDirectory = FILES_PATH + ctx.from; 
         /*
         const files = [
           { path: "./clientes/" + ctx.from + "/dni-frente.jpeg", name: "dni-frente.jpeg" },

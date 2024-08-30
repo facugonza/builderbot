@@ -1,5 +1,5 @@
-import dotenv from "dotenv";
-dotenv.config();
+//import dotenv from "dotenv";
+//dotenv.config();
 
 import { addKeyword } from '@builderbot/bot';
 import { setClienteData } from "../models/clienteDATA.js";

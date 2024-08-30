@@ -1,5 +1,5 @@
-import dotenv from "dotenv";
-dotenv.config();
+//import dotenv from "dotenv";
+//dotenv.config();
 
 import { addKeyword, EVENTS } from '@builderbot/bot';
 import { logger, emailLogger } from '../logger/logger.js';

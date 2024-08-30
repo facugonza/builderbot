@@ -39,7 +39,7 @@ const checkLastMessageTime = async () => {
 }
 
 const checkAppStatus = () => {
-    exec('pm2 status whatsapp-bot', (err, stdout, stderr) => {
+    exec('pm2 status app', (err, stdout, stderr) => {
         logger.info("START TO CHECK DATABOT STATUS ....");
         checkHealthEndpoint();
         logger.info("FINISHED CHECK DATABOT STATUS ....");
@@ -85,7 +85,7 @@ const checkHealthEndpoint = () => {
     req.on('error', (e) => {
         logger.info('Error al verificar el endpoint de salud, reiniciando...',e);
         emailLogger.info('Error al verificar el endpoint de salud, reiniciando...');
-        exec('pm2 restart whatsapp-bot', (err, stdout, stderr) => {
+        exec('pm2 restart app', (err, stdout, stderr) => {
             if (err) {
                 logger.error(`Error reiniciando la aplicación: ${stderr}`);
                 emailLogger.error(`Error reiniciando la aplicación: ${stderr}`);
@@ -101,7 +101,7 @@ const checkHealthEndpoint = () => {
 
 
 const restartApp = () => {
-    exec('pm2 restart whatsapp-bot', (err, stdout, stderr) => {
+    exec('pm2 restart app', (err, stdout, stderr) => {
         if (err) {
             logger.error(`Error reiniciando la aplicación: ${stderr}`);
             emailLogger.error(`Error reiniciando la aplicación: ${stderr}`);
