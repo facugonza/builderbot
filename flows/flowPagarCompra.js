@@ -53,6 +53,7 @@ async function findComercio(numeroComercio) {
         return null;
     }  
 }
+// console log 
 
 async function findCuotasComercio(numeroComercio) {
     try {
