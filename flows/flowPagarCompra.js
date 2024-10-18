@@ -1,15 +1,13 @@
-//import dotenv from "dotenv";
-//dotenv.config();
+import dotenv from "dotenv";
+dotenv.config();
 
 import { addKeyword, EVENTS } from '@builderbot/bot';
 import { logger, emailLogger } from '../logger/logger.js';
 import axios from "axios";
-import {setClienteData } from "../models/clienteDATA.js";
-//import { downloadMediaMessage } from '@builderbot/provider-baileys'
-//import { writeFileSync, readFileSync } from "fs";
+import { setClienteData } from "../models/clienteDATA.js";
 import fs from "fs";
 import { findCustomer } from "../services/dataclientes/clienteService.js";
-
+import { Console } from "console";
 
 async function createDirectoryIfNotExists(directory) {
     if (!fs.existsSync(directory)) {
@@ -17,88 +15,110 @@ async function createDirectoryIfNotExists(directory) {
     }
 }
   
-function capturarRespuesta(ctx, fallBack, campo) {
-    if (!ctx.body) {
-      return fallBack();
-    }
-    comercio[campo] = ctx.body;
-}
-  
 async function findComercio(numeroComercio) {
     try {
+        console.log("entre a findcomercio")
+        const apiUrl = process.env.API_URL_COMERCIO_GET;
+        if (!apiUrl) {
+            console.log("ERROR: API_URL_COMERCIO_GET no está definido en el archivo .env o está vacío");
+            return null;
+        }
+
+        const fullUrl = apiUrl.endsWith('/') ? apiUrl + numeroComercio : apiUrl + numeroComercio;
+        console.log("URL completa para solicitud de comercio:", fullUrl);
+        if (!fullUrl.startsWith("http")) {
+            console.log("ERROR: La URL generada no es válida, revisa la configuración del archivo .env");
+            return null;
+        }
+
         var config = {
-          method: "post",
-          url: process.env.API_URL_COMERCIO_GET + numeroComercio ,
-          headers: {
-          },
+          method: "post",  // Cambiado a POST
+          url: fullUrl,
+          headers: {},
         };
     
         const response = await axios(config);
-        console.log(" COMERCIO > " + response.data );
+        console.log("Número de comercio solicitado:", numeroComercio);
+        //console.log("Respuesta completa del servidor:", response);
+        //console.log("Datos del comercio obtenidos:", response.data);
+        
+        if (response.status !== 200) {
+            console.log("Error en la solicitud: código de estado", response.status);
+            return null;
+        }
         return response.data;
-      } catch (e) {
-        emailLogger.error("ERROR flowMain isRegisterClient > "+ e.stack);
+    } catch (e) {
+        console.log("Error al hacer la solicitud:", e.message);
+        emailLogger.error("ERROR flowMain isRegisterClient > " + e.stack);
         return null;
-      }  
+    }  
 }
 
 async function findCuotasComercio(numeroComercio) {
     try {
       const config = {
         method: "get",
-        url: process.env.API_URL_CUOTAS_GET + numeroComercio ,
-        headers: {
-        },
+        url: process.env.API_URL_CUOTAS_GET + numeroComercio,
+        headers: {},
       };
   
       const response = await axios(config);
-      return response.data; // Asumimos que esto retorna un array de objetos, donde cada objeto tiene una propiedad "cuotas" y una propiedad "importe"
+      return response.data;
     } catch (e) {
-      emailLogger.error("ERROR flowMain getCuotasOptions > "+ e.stack);
+      emailLogger.error("ERROR flowMain getCuotasOptions > " + e.stack);
       return null;
     }  
   }
 
-
-
 const flowPagarCompras = addKeyword("COMPRA","COMPRAR" , {sensitive : false})
   .addAnswer(".",
     { capture: false },
-      async (ctx, { flowDynamic ,endFlow}) => {
-        
+      async (ctx, { flowDynamic ,state}) => {
+        state.clear();
         const cliente = await findCustomer(ctx);
+        //console.log("Datos del cliente obtenidos al inicio del flujo:", cliente);
 
         if (Object.keys(cliente).length > 0){
+          //await state.update({ customer:cliente });
           return flowDynamic([{ body: `Recuerda que tu disponible para compras actual es de: ${cliente.disponible}` }]);
         }else {
-          return endFlow(".");
+          return flowDynamic(".");
         }
       }
   )
   .addAnswer(
-    "Para continuar *¿Me podrías proporcionar numero de comercio, por favor? Solo numeros (ej. 450001)* ",
+    "Para continuar *¿Me podrías proporcionar numero de comercio, por favor? Solo numeros (ej. 45000)* ",
     { capture: true },
-    async (ctx, { fallBack,endFlow ,flowDynamic}) => {
+     async (ctx, { fallBack, flowDynamic, state }) => {
         try{  
             const comercioRegex = /^\d{1,6}$/;
-            if (comercioRegex.test(ctx.body)) {                          
-                await flowDynamic([{ body: "Aguarda un instante.. estoy obteniendo los datos del comercio...!!!" }]);
+            console.log("Número de comercio recibido: ", ctx.body);
+            if (comercioRegex.test(ctx.body)) {
+                flowDynamic([{ body: "Aguarda un instante.. estoy obteniendo los datos del comercio...!!!" }]);
                 const comercio = await findComercio(ctx.body);                                
-                if (comercio && Array.isArray(comercio.puntos) && comercio.puntos.length > 0) {
-                    const cliente = await findCustomer(ctx);
-                    cliente.comercioRazonSocial = comercio.puntos[0].descrpto;
-                    cliente.comercioNumero = ctx.body;
-                    cliente.comercio = comercio;
-                    await setClienteData(ctx, cliente);  
-                    //
+                if (comercio) {
+                  const infoVenta = {};
+                  infoVenta.comercio = comercio;
+                  infoVenta.importeCompra =  0 ;
+                  await state.update({ venta:infoVenta });
+                    //const cliente = state.getMyState().cliente;
+                    //cliente.comercioRazonSocial = comercio.puntos[0].descrpto || "No especificado";
+                    //cliente.comercioNumero = ctx.body;
+                    //cliente.comercio = comercio;
+                      
+                    //console.log("Cliente después de actualizar datos:", cliente);
+                    return await flowDynamic([{ body: "*Estas por realizar compra en : " + infoVenta.comercio.puntos[0].descrpto + "*" }]);
                 }else {                    
+                    console.log("Comercio no encontrado en la base de datos");
                     return fallBack("Numero de comercio : "+ctx.body+" no encontrado en nuestras base de datos !!!!");    
                 }       
                 
             } else {
+                console.log("Número de comercio no válido: ", ctx.body);
                 return fallBack("El numero de comercio ("+ctx.body+") no es válido !!! Reingresalo.");
             }
         }catch(error){
+            console.log("Error al buscar el comercio: ", error.stack);
             emailLogger.error(error.stack);
             logger.error(error.stack);
         }
@@ -107,40 +127,38 @@ const flowPagarCompras = addKeyword("COMPRA","COMPRAR" , {sensitive : false})
   .addAnswer(
     ".... ",
     { capture: false },
-    async (ctx, { flowDynamic }) => {
-      const cliente = await findCustomer(ctx);
-
-      return await flowDynamic([{ body: "*Estas por realizar compra en :"+cliente.comercioRazonSocial +"*"}]);
+    async (ctx, { flowDynamic, state }) => {
+      const venta = await state.get("venta");
+      console.log("venta.importeCompra       :", venta.importeCompra);
+      console.log("venta.comercio.personalid :", venta.comercio.personalid);
+      await flowDynamic([{ body: "*Estas por realizar compra en :" + venta.comercio.puntos[0].descrpto + "*"}]);
     }
   )  
   .addAnswer(
     "Para continuar *¿Me podrías proporcionar el importe de la compra (ejemplo: 1000.00 ), por favor?*",
     { capture: true },
-    async (ctx, { fallBack }) => {
-        //const importeRegex = /^(\d*\.)?\d+$/;
+    async (ctx, { fallBack, state }) => {
         const importeRegex = /^\d+(\.\d+)?$/;
 
         if (importeRegex.test(ctx.body)) {
           const cliente = await findCustomer(ctx);
-            cliente.importeCompra = parseFloat(ctx.body);
-            setClienteData(ctx, cliente);  
+          await state.update({ importeCompra: parseFloat(ctx.body)});  
         } else {
             return fallBack(
               "*El importe ingresado "+ctx.body+ " no es valido por favor .. reingresalo (ejemplo: 1000.00 )*."
             );
         }
       }
-
   )
   .addAnswer(
     "*Por favor reingresa el importe para continuar con la operacion.*",
     { capture: true },
-    async (ctx, { fallBack }) => {
-        //const importeRegex = /^(\d*\.)?\d+$/;
+    async (ctx, { fallBack, state }) => {
         const importeRegex = /^\d+(\.\d+)?$/;
         if (importeRegex.test(ctx.body)) {
-          const cliente = await findCustomer(ctx);
-            if (cliente.importeCompra != parseFloat(ctx.body)){
+          const importeCompraFirst = state.getMyState().importeCompra;
+          console.log("Cliente al verificar el importe reingresado:", importeCompraFirst);
+            if (importeCompraFirst != parseFloat(ctx.body)){
                 return fallBack(
                   "*El importe ingresado  "+ctx.body+ " no es coincide con el importe ingresado previamente*."
                 );  
@@ -151,26 +169,23 @@ const flowPagarCompras = addKeyword("COMPRA","COMPRAR" , {sensitive : false})
             );
         }
       }
-
   )
 
   .addAnswer(
     "Validando datos ingresados... ..",
     { capture: false },
-    async (ctx, { flowDynamic,endFlow}) => {
+    async (ctx, { flowDynamic, endFlow, state }) => {
         try{
-            //console.log("*****************************************************CONFIRMACION *-********************");
-            const clienteDATA = await findCustomer(ctx);
-            //console.log("*************************************************************************");    
-            //console.log(clienteDATA);
-            //console.log("*************************************************************************");     
-            if (clienteDATA.comercioRazonSocial && clienteDATA.importeCompra){
-              return  flowDynamic([
-                { body: "*CONFIRMAS COMPRA EN "+clienteDATA.comercioRazonSocial+" POR UN IMPORTE DE "+clienteDATA.importeCompra + " EN PLAN D ?*" },
-                { body: "*Para confirmar operacion ingresa tu numero de DNI....*" }
+            const venta = state.get("venta");
+            console.log("venta.comercio.puntos[0].descrpto"+venta.comercio.puntos[0].descrpto);
+            console.log("venta.importeCompra" + venta.importeCompra);
+            if (true ){
+              flowDynamic([
+                { body: "*CONFIRMAS COMPRA EN "+venta.comercio.puntos[0].descrpto+" POR UN IMPORTE DE "+venta.importeCompra + " EN PLAN D ?*" },
+                //{ body: "*Para confirmar operacion ingresa tu numero de DNI....*" }
               ]);   
             }else {
-                return endFlow("*OCURRIO UN ERROR PROCESANDO LA OPERACION REINTENTA LUEGO .... !! MUCHAS GRACIAS ");
+                return endFlow("*001 - OCURRIO UN ERROR PROCESANDO LA OPERACION REINTENTA LUEGO .... !! MUCHAS GRACIAS ");
             }
         }catch(error){    
             emailLogger.error(error.stack);
@@ -180,22 +195,19 @@ const flowPagarCompras = addKeyword("COMPRA","COMPRAR" , {sensitive : false})
     }
   )
   .addAnswer(
-    "*Aguarda unos instantes.. procesando operacion ... !!!* ",
-    { capture: false },
-  )
-  .addAnswer(
-    ".....",
+    "*Para confirmar operacion ingresa tu numero de DNI....*",
     { capture: true },
-    async (ctx, { fallBack,endFlow,flowDynamic }) => {
+    async (ctx, { fallBack, endFlow, flowDynamic, state }) => {
         try{
           let cantidadIntentos= 1;
           const dniRegex = /^\d{1,8}$/;
           if (dniRegex.test(ctx.body)) {                          
-            const dniIngresado = parseInt(ctx.body.toLowerCase());
+            const dniIngresado = parseInt(ctx.body);
             
             const cliente = await findCustomer(ctx);
+            console.log("Datos del cliente al validar DNI:", cliente.documento + " == " + dniIngresado );
 
-            if ( dniIngresado === cliente.documento){
+            if ( dniIngresado == cliente.documento){
                 const transactionId = "123456"; // suponiendo que obtienes un ID de transacción
                 await flowDynamic([
                   {
@@ -203,7 +215,7 @@ const flowPagarCompras = addKeyword("COMPRA","COMPRAR" , {sensitive : false})
                   media: "https://i.postimg.cc/GmLjpD8M/descarga.png",
                   },
                 ]);    
-                setClienteData(ctx,{});
+                state.clear();
                 return endFlow("*MUCHAS GRACIAS.TENES SUERTE ..TENES DATA !!!* ");
 
             }else {
@@ -225,7 +237,5 @@ const flowPagarCompras = addKeyword("COMPRA","COMPRAR" , {sensitive : false})
         }        
     }
 );
-
-
 
 export default flowPagarCompras;
