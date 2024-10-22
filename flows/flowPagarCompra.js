@@ -33,7 +33,6 @@ async function procesarVenta(cliente,state) {
   ///const importeCompra  = venta.importeCompra;
 
 
-
   const compraQREstatico = {
       tipo_user_id: 9,
       tipo_user: "APP_QR",
