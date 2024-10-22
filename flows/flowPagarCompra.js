@@ -9,6 +9,68 @@ import fs from "fs";
 import { findCustomer } from "../services/dataclientes/clienteService.js";
 import { Console } from "console";
 
+function generarRequestId(dni) {
+  const fecha = new Date();
+  const formatoFechaHora = 
+      String(fecha.getDate()).padStart(2, '0') + // Día (dd)
+      String(fecha.getMonth() + 1).padStart(2, '0') + // Mes (MM)
+      fecha.getFullYear() + // Año (yyyy)
+      String(fecha.getHours()).padStart(2, '0') + // Hora (HH)
+      String(fecha.getMinutes()).padStart(2, '0') + // Minutos (mm)
+      String(fecha.getSeconds()).padStart(2, '0'); // Segundos (ss)
+  
+  return `${dni}-${formatoFechaHora}`; // DNI-FechaHora
+}
+
+// Función para procesar la venta
+async function procesarVenta(cliente,state) {
+  const dni = cliente.documento; // DNI del cliente
+
+  // Asignar el request_id usando el DNI y la fecha
+  const requestId = generarRequestId(dni); // Generar request_id con formato DNI-fechaHora
+  const venta  = state.get("venta");
+
+  ///const importeCompra  = venta.importeCompra;
+
+
+
+  const compraQREstatico = {
+      tipo_user_id: 9,
+      tipo_user: "APP_QR",
+      request_id: requestId, 
+      documento: dni,
+      plastico: cliente.plastico.replace(/\s+/g, '').trim(),
+      vtoplastico: "1024",
+      cuitcomercio: venta.comercio.puntos[0].cuitxpto,
+      empresa: venta.numeroComercio,
+      puntovta: 1,
+      numcaja: 1,
+      total: venta.importeCompra,
+      planvta: 1,
+      cuotasvta: 1,
+      fecha: new Date().toISOString(),
+      observacionvta: "API_REST_34_APPMOVILE_QR",
+      token: "",
+  };
+  console.log('JSON DE LA COMPTRA > :', compraQREstatico);
+
+  try {
+      
+      const response = await axios.post('http://200.70.56.203:8021/AppMovil/ApiComercioVenta', compraQREstatico, {
+          headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+          }
+      });
+
+      console.log('Venta procesada xd:', response.data);
+      return response.data;
+  } catch (error) {
+      console.error('Error al procesar la venta sad :', error);
+      throw new Error('No se pudo procesar la venta');
+  }
+}
+
 async function createDirectoryIfNotExists(directory) {
     if (!fs.existsSync(directory)) {
       fs.mkdirSync(directory);
@@ -101,6 +163,7 @@ const flowPagarCompras = addKeyword("COMPRA","COMPRAR" , {sensitive : false})
                   const infoVenta = {};
                   infoVenta.comercio = comercio;
                   infoVenta.importeCompra =  0 ;
+                  infoVenta.numeroComercio =  ctx.body ;
                   await state.update({ venta:infoVenta });
                     //const cliente = state.getMyState().cliente;
                     //cliente.comercioRazonSocial = comercio.puntos[0].descrpto || "No especificado";
@@ -209,7 +272,9 @@ const flowPagarCompras = addKeyword("COMPRA","COMPRAR" , {sensitive : false})
             console.log("Datos del cliente al validar DNI:", cliente.documento + " == " + dniIngresado );
 
             if ( dniIngresado == cliente.documento){
-                const transactionId = "123456"; // suponiendo que obtienes un ID de transacción
+                procesarVenta(cliente,state);
+
+               const transactionId = "123456";
                 await flowDynamic([
                   {
                   body: "*Operación exitosa. El número de transacción es  N°: "+ transactionId + "*" ,
@@ -218,7 +283,7 @@ const flowPagarCompras = addKeyword("COMPRA","COMPRAR" , {sensitive : false})
                 ]);    
                 state.clear();
                 return endFlow("*MUCHAS GRACIAS.TENES SUERTE ..TENES DATA !!!* ");
-
+                  
             }else {
                 if (cantidadIntentos < 3 ){
                   return fallBack("*EL NUMERO INGRESADO NO COINCIDE CON NUESTROS REGISTROS, REINGRESA EL NMUMERO DE DNI...!!!* ");
