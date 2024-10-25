@@ -25,7 +25,7 @@ function generarRequestId() {
 }
 
 // Función para verificar si Plan D está activo en el JSON del comercio
-function getSomePlanActive(comercio) {
+function getSomePlanActive(comercio, numeroComercio) {
   if (!comercio || !comercio.planes) {
     console.log("El comercio o los planes no existen:", comercio);
     return 0; // Retorna 0 si no existen planes
@@ -43,10 +43,14 @@ function getSomePlanActive(comercio) {
     return 1;
   }
 
-  // Si no tiene ni plan 53 ni 1, verificar el plan 2
-  const hasPlan2 = comercio.planes.find(plan => plan.planesPK.clavepln === 2);
-  if (hasPlan2) {
-    return 2;
+  const comercioAutorizados = [21, 4840, 4500, 5000];
+  if (comercioAutorizados.includes(Number(numeroComercio))) {
+    const hasPlan2 = comercio.planes.some(plan => {
+      
+      return plan.planesPK.clavepln === 2;
+    });
+
+    if (hasPlan2) return 2;
   }
 
   return 0; // Si no tiene ninguno de los planes anteriores, retornar 0
@@ -75,7 +79,7 @@ async function procesarVenta(cliente, state) {
     puntovta: 1,
     numcaja: 1,
     total: importeCompra,
-    planvta: getSomePlanActive(venta.comercio) , // Plan D o 1 cuota
+    planvta: getSomePlanActive(venta.comercio, venta.numeroComercio), // Plan D o 1 cuota
     cuotasvta: 1, // Cuotas según Plan D o 1
     fecha: new Date().toISOString(),
     observacionvta: "API_REST_34_APPMOVILE_QR",
@@ -254,7 +258,7 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
       try {
         const compra = state.get("venta");
         const importeCompra = state.get("importeCompra");
-        const planActivo = getSomePlanActive(compra.comercio); // Obtener el plan activo con prioridad
+        const planActivo = getSomePlanActive(compra.comercio, compra.numeroComercio); // Obtener el plan activo con prioridad
   
         if (planActivo === 53) {
           // Si el plan activo es Plan D (clavepln = 53)
@@ -269,7 +273,7 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
         } else if (planActivo === 2) {
           // Si el plan activo es de 2 cuotas (clavepln = 2)
           flowDynamic([{
-            body: `*Confirmas compra en ${compra.comercio.puntos[0].descrpto} por un importe de $${importeCompra} en 1 CUOTA?*`
+            body: `*Confirmas compra en ${compra.comercio.puntos[0].descrpto} por un importe de $${importeCompra} en 1 CUOTA(codigo2)?*`
           }]);
         } else {
           // Si no hay ningún plan disponible
@@ -293,8 +297,14 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
         if (dniRegex.test(ctx.body)) {
           const dniIngresado = parseInt(ctx.body);
           const cliente = await findCustomer(ctx);
+          const venta = state.get("venta");
+          const planActivo = getSomePlanActive(venta.comercio, venta.numeroComercio); // Obtener el plan activo con prioridad
 
           if (dniIngresado == cliente.documento) {
+            // Actualizar la venta con el plan activo seleccionado
+            venta.planActivo = planActivo;
+            await state.update({ venta });
+
             await procesarVenta(cliente, state);
             const transactionId = "123456"; // Este valor debe ser reemplazado por el ID real de la transacción
             await flowDynamic([
@@ -326,4 +336,3 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
   );
 
 export default flowPagarCompras;
- 
