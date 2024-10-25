@@ -58,13 +58,13 @@ function getSomePlanActive(comercio, numeroComercio) {
 
 
 // Función para procesar la venta
-async function procesarVenta(cliente, state) {
+async function procesarCompra(cliente, state) {
   const tarjeta = cliente.tarjeta; 
   const dni = cliente.documento;
 
   // Asignar el request_id usando el DNI y la fecha
   const requestId = generarRequestId(tarjeta);
-  const venta = state.get("venta");
+  const compra = state.get("venta");
   const importeCompra = state.get("importeCompra");
 
   const compraQREstatico = {
@@ -73,13 +73,13 @@ async function procesarVenta(cliente, state) {
     request_id: requestId, 
     documento: dni,
     plastico: cliente.plastico.replace(/\s+/g, '').trim(),
-    vtoplastico: "1026",
-    cuitcomercio: venta.comercio.puntos[0].cuitxpto,
-    empresa: venta.numeroComercio,
+    vtoplastico: cliente.vtotarjeta,
+    cuitcomercio: compra.comercio.puntos[0].cuitxpto,
+    empresa: compra.numeroComercio,
     puntovta: 1,
     numcaja: 1,
     total: importeCompra,
-    planvta: getSomePlanActive(venta.comercio, venta.numeroComercio), // Plan D o 1 cuota
+    planvta: compra.planActivo, // Plan D o 1 cuota
     cuotasvta: 1, // Cuotas según Plan D o 1
     fecha: new Date().toISOString(),
     observacionvta: "API_REST_34_APPMOVILE_QR",
@@ -213,9 +213,8 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
     { capture: false },
     async (ctx, { flowDynamic, state }) => {
       const compra = await state.get("venta");
-      //console.log("venta.importeCompra       :", venta.importeCompra);
-      console.log("venta.comercio.personalid :", compra.comercio.personalid);
-      await flowDynamic([{ body: "*Estas por realizar compra en :" + compra.comercio.puntos[0].descrpto + "*" }]);
+      const comercio = compra.comercio;
+      await flowDynamic([{ body: "*Estas por realizar compra en :" + comercio.puntos[0].descrpto + "*" }]);
     }
   )
   .addAnswer(
@@ -238,7 +237,6 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
       const importeRegex = /^\d+(\.\d+)?$/;
       if (importeRegex.test(ctx.body)) {
         const importeCompraFirst = state.get("importeCompra");
-        console.log("Cliente al verificar el importe reingresado:", importeCompraFirst);
         if (importeCompraFirst != parseFloat(ctx.body)) {
           return fallBack(
             "*El importe ingresado  " + ctx.body + " no es coincide con el importe ingresado previamente*."
@@ -259,7 +257,10 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
         const compra = state.get("venta");
         const importeCompra = state.get("importeCompra");
         const planActivo = getSomePlanActive(compra.comercio, compra.numeroComercio); // Obtener el plan activo con prioridad
-  
+        
+        compra.planActivo = planActivo;
+        await state.update({ venta: compra });
+
         if (planActivo === 53) {
           // Si el plan activo es Plan D (clavepln = 53)
           flowDynamic([{
@@ -271,9 +272,8 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
             body: `*Confirmas compra en ${compra.comercio.puntos[0].descrpto} por un importe de $${importeCompra} en 1 CUOTA?*`
           }]);
         } else if (planActivo === 2) {
-          // Si el plan activo es de 2 cuotas (clavepln = 2)
           flowDynamic([{
-            body: `*Confirmas compra en ${compra.comercio.puntos[0].descrpto} por un importe de $${importeCompra} en 1 CUOTA(codigo2)?*`
+            body: `*Confirmas compra en ${compra.comercio.puntos[0].descrpto} por un importe de $${importeCompra} en 1 CUOTA -.?*`
           }]);
         } else {
           // Si no hay ningún plan disponible
@@ -286,9 +286,8 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
       }
     }
   )
-  
   .addAnswer(
-    "*Para confirmar operacion ingresa tu numero de DNI.*",
+    "*Para confirmar operacion ingresa tu numero de DNI.* (Ej: 22123456)",
     { capture: true },
     async (ctx, { fallBack, endFlow, flowDynamic, state }) => {
       try {
@@ -297,16 +296,11 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
         if (dniRegex.test(ctx.body)) {
           const dniIngresado = parseInt(ctx.body);
           const cliente = await findCustomer(ctx);
-          const venta = state.get("venta");
-          const planActivo = getSomePlanActive(venta.comercio, venta.numeroComercio); // Obtener el plan activo con prioridad
+          const compra = state.get("venta");
+          const planActivo = compra.planActivo;
 
           if (dniIngresado == cliente.documento) {
-            // Actualizar la venta con el plan activo seleccionado
-            venta.planActivo = planActivo;
-            await state.update({ venta });
-
-            await procesarVenta(cliente, state);
-            const transactionId = "123456"; // Este valor debe ser reemplazado por el ID real de la transacción
+            const transactionId = await procesarCompra(cliente, state);
             await flowDynamic([
               {
                 body: "*Operación exitosa. El número de transacción es  N°: " + transactionId + "*",
