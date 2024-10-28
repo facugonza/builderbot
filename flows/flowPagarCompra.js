@@ -3,12 +3,8 @@ dotenv.config();
 
 import { addKeyword, EVENTS } from '@builderbot/bot';
 import { logger, emailLogger } from '../logger/logger.js';
-import axios from "axios";
-import fs from "fs";
 import { findCustomer } from "../services/dataclientes/clienteService.js";
-import { findComercio,findPlanActiveByComercio } from "../services/compras/comprasService.js";
-
-// Función para generar el request_id con formato específico
+import { findComercio,findPlanActiveByComercio,procesarCompra } from "../services/compras/comprasService.js";
 
 const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
   .addAnswer(".",
@@ -69,7 +65,6 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
     async (ctx, { fallBack, state }) => {
       const importeRegex = /^\d+(\.\d+)?$/;
       if (importeRegex.test(ctx.body)) {
-        const cliente = await findCustomer(ctx);
         await state.update({ importeCompra: parseFloat(ctx.body) });
       } else {
         return fallBack("*El importe ingresado " + ctx.body + " no es valido por favor .. reingresalo (Ejemplo: 1000.00 )*.");
@@ -77,7 +72,7 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
     }
   )
   .addAnswer(
-    "*Por favor reigresa nuevamente el importe para confirmar el monto y continuar con la operacion.*",
+    "*Por favor reingresa nuevamente el importe para confirmarlo y continuar con la operacion.*",
     { capture: true },
     async (ctx, { fallBack, state }) => {
       const importeRegex = /^\d+(\.\d+)?$/;

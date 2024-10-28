@@ -1,7 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import { addKeyword, EVENTS } from '@builderbot/bot';
 import { logger, emailLogger } from  '../../logger/logger.js';;
 import axios from "axios";
 
@@ -53,19 +52,17 @@ async function generarRequestId() {
   
   
   // Función para procesar la venta
-  async function procesarCompra(cliente, state) {
-    const tarjeta = cliente.tarjeta; 
+  // Función para procesar la compra con manejo de reintentos
+async function procesarCompra(cliente, state) {
     const dni = cliente.documento;
-  
-    // Asignar el request_id usando el DNI y la fecha
-    const requestId = generarRequestId(tarjeta);
+    const requestId = await generarRequestId();
     const compra = state.get("venta");
     const importeCompra = state.get("importeCompra");
   
     const compraQREstatico = {
       tipo_user_id: 9,
       tipo_user: "APP_QR",
-      request_id: requestId, 
+      request_id: requestId,
       documento: dni,
       plastico: cliente.plastico.replace(/\s+/g, '').trim(),
       vtoplastico: cliente.vtotarjeta,
@@ -74,76 +71,91 @@ async function generarRequestId() {
       puntovta: 1,
       numcaja: 1,
       total: importeCompra,
-      planvta: compra.planActivo, // Plan D o 1 cuota
-      cuotasvta: 1, // Cuotas según Plan D o 1
+      planvta: compra.planActivo,
+      cuotasvta: compra.cuotasSeleccionadas,
       fecha: new Date().toISOString(),
-      observacionvta: "API_REST_34_APPMOVILE_QR",
+      observacionvta: "VENTA_API_REST_DATABOT",
       token: "",
     };
   
-    console.log('JSON DE LA COMPRA > :', compraQREstatico);
+    // Función auxiliar para realizar la solicitud
+    async function makeRequest(url) {
+      try {
+        logger.info("Intentando procesar compra en: " + url);
+        const response = await axios.post(url, compraQREstatico, {
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          timeout: 30000
+        });
+        return response.data;
+      } catch (e) {
+        emailLogger.error("Error en makeRequest > " + e.stack);
+        console.log(e);
+        return null;
+      }
+    }
   
-    try {
-      const response = await axios.post('http://200.70.56.203:8021/AppMovil/ApiComercioVenta', compraQREstatico, {
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        }
-      });
+    // Realiza la solicitud principal y, si falla, intenta con la URL de respaldo
+    logger.info("process.env.API_URL_COMPRAR > "+ process.env.API_URL_COMPRAR) ; 
+    let data = await makeRequest(process.env.API_URL_COMPRAR);
+    if (!data) {
+        logger.info("process.env.API_URL_COMPRAR_BKP > "+ process.env.API_URL_COMPRAR_BKP) ; 
+        data = await makeRequest(process.env.API_URL_COMPRAR_BKP);
+    }
   
-      const data = response.data;
-      if (data.error_code === 1) {
-        logger.info('Compra procesada exitosamente:', data);
-        return {
-          success: true,
-          message: `*Operación exitosa.* Código de autorización N° : ${data.num_autorizacion}.`
-        };
-      } else {
-        logger.error('Error en la compra:', data);
-        return {
-          success: false,
-          message: `*Operación fallida. No se pudo completar la operación. Reintenta Luego o contacta a un operador!* '}`
-        };
-      }    
-    } catch (error) {
-      emailLogger.error('Error al procesar la venta:', error);
+    // Maneja la respuesta de la compra
+    if (data && data.error_code === 1) {
+      logger.info('Compra procesada exitosamente:', data);
+      const messageSuccess = {
+        success: true,
+        message: `*Operación exitosa.* Código de autorización N°: ${data.num_autorizacion}.`
+      };
+      
+      logger.info("messageSuccess >> " + messageSuccess);
+      return messageSuccess;
+    } else {
+      logger.error('Error en la compra:', data || 'Sin respuesta de ambos servidores');
+      const messageFail =  {
+        success: false,
+        message: `*Operación fallida. No se pudo completar la operación. Reintenta luego o contacta a un operador!*`
+      };
+      return messageFail;
     }
   }
   async function findComercio(numeroComercio) {
-    try {
-      console.log("entre a findcomercio");
-      const apiUrl = process.env.API_URL_COMERCIO_GET;
-      if (!apiUrl) {
-        console.log("ERROR: API_URL_COMERCIO_GET no está definido en el archivo .env o está vacío");
+    async function findComercioRequest(url) {
+      try {
+        logger.info("Intentando obtener datos de comercio en: " + url);
+        const config = {
+          method: "post",
+          url: url + numeroComercio,
+          headers: {},
+          timeout: 30000
+        };
+        const response = await axios(config);
+        return response.data;
+      } catch (e) {
+        emailLogger.error("Error en makeRequest > " + e.stack);
         return null;
       }
+    }
   
-      const fullUrl = apiUrl.endsWith('/') ? apiUrl + numeroComercio : apiUrl + numeroComercio;
-      console.log("URL completa para solicitud de comercio:", fullUrl);
-      if (!fullUrl.startsWith("http")) {
-        console.log("ERROR: La URL generada no es válida, revisa la configuración del archivo .env");
-        return null;
-      }
+    let comercioData = await findComercioRequest(process.env.API_URL_COMERCIO_GET);
+    if (!comercioData) {
+      logger.info("process.env.API_URL_COMERCIO_GET_BKP > " + process.env.API_URL_COMERCIO_GET_BKP);
+      comercioData = await findComercioRequest(process.env.API_URL_COMERCIO_GET_BKP);
+    }
   
-      var config = {
-        method: "post",  // Cambiado a POST
-        url: fullUrl,
-        headers: {},
-      };
-  
-      const response = await axios(config);
-      console.log("Número de comercio solicitado:", numeroComercio);
-  
-      if (response.status !== 200) {
-        console.log("Error en la solicitud: código de estado", response.status);
-        return null;
-      }
-      return response.data;
-    } catch (e) {
-      console.log("Error al hacer la solicitud:", e.message);
-      emailLogger.error("ERROR flowMain isRegisterClient > " + e.stack);
+    if (comercioData) {
+      //logger.info("Datos de comercio obtenidos correctamente:", comercioData);
+      return comercioData;
+    } else {
+      logger.warn("No se pudo obtener datos del comercio con ambas URLs.");
       return null;
-    }  
+    }
   }
+  
 
-  export { findComercio,findPlanActiveByComercio, generarRequestId};
+  export { findComercio,findPlanActiveByComercio,procesarCompra};
