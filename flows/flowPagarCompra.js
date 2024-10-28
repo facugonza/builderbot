@@ -4,164 +4,11 @@ dotenv.config();
 import { addKeyword, EVENTS } from '@builderbot/bot';
 import { logger, emailLogger } from '../logger/logger.js';
 import axios from "axios";
-import { setClienteData } from "../models/clienteDATA.js";
 import fs from "fs";
 import { findCustomer } from "../services/dataclientes/clienteService.js";
-import { Console } from "console";
+import { findComercio,findPlanActiveByComercio } from "../services/compras/comprasService.js";
 
 // Función para generar el request_id con formato específico
-function generarRequestId() {
-  const fecha = new Date();
-  const formatoFechaHora = 
-      String(fecha.getDate()).padStart(2, '0') + // Día (dd)
-      String(fecha.getMonth() + 1).padStart(2, '0') + // Mes (MM)
-      fecha.getFullYear() + // Año (yyyy)
-      String(fecha.getHours()).padStart(2, '0') + // Hora (HH)
-      String(fecha.getMinutes()).padStart(2, '0') + // Minutos (mm)
-      String(fecha.getSeconds()).padStart(2, '0'); // Segundos (ss)
-      String(fecha.getMilliseconds()).padStart(2, '0'); // Segundos (ss)
-  
-  return `${formatoFechaHora}`; // Formato: tarjeta-fechaHora
-}
-
-// Función para verificar si Plan D está activo en el JSON del comercio
-function getSomePlanActive(comercio, numeroComercio) {
-  if (!comercio || !comercio.planes) {
-    console.log("El comercio o los planes no existen:", comercio);
-    return 0; // Retorna 0 si no existen planes
-  }
-
-  // Primero verificar si existe el plan 53 (Plan D)
-  const hasPlanD = comercio.planes.find(plan => plan.planesPK.clavepln === 53);
-  if (hasPlanD) {
-    return 53;
-  }
-
-  // Si no tiene plan 53, verificar el plan 1
-  const hasPlan1 = comercio.planes.find(plan => plan.planesPK.clavepln === 1);
-  if (hasPlan1) {
-    return 1;
-  }
-
-  const comercioAutorizados = [21, 4840, 4500, 5000];
-  if (comercioAutorizados.includes(Number(numeroComercio))) {
-    const hasPlan2 = comercio.planes.some(plan => {
-      
-      return plan.planesPK.clavepln === 2;
-    });
-
-    if (hasPlan2) return 2;
-  }
-
-  return 0; // Si no tiene ninguno de los planes anteriores, retornar 0
-}
-
-
-// Función para procesar la venta
-async function procesarCompra(cliente, state) {
-  const tarjeta = cliente.tarjeta; 
-  const dni = cliente.documento;
-
-  // Asignar el request_id usando el DNI y la fecha
-  const requestId = generarRequestId(tarjeta);
-  const compra = state.get("venta");
-  const importeCompra = state.get("importeCompra");
-
-  const compraQREstatico = {
-    tipo_user_id: 9,
-    tipo_user: "APP_QR",
-    request_id: requestId, 
-    documento: dni,
-    plastico: cliente.plastico.replace(/\s+/g, '').trim(),
-    vtoplastico: cliente.vtotarjeta,
-    cuitcomercio: compra.comercio.puntos[0].cuitxpto,
-    empresa: compra.numeroComercio,
-    puntovta: 1,
-    numcaja: 1,
-    total: importeCompra,
-    planvta: compra.planActivo, // Plan D o 1 cuota
-    cuotasvta: 1, // Cuotas según Plan D o 1
-    fecha: new Date().toISOString(),
-    observacionvta: "API_REST_34_APPMOVILE_QR",
-    token: "",
-  };
-
-  console.log('JSON DE LA COMPRA > :', compraQREstatico);
-
-  try {
-    const response = await axios.post('http://200.70.56.203:8021/AppMovil/ApiComercioVenta', compraQREstatico, {
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      }
-    });
-
-    console.log('Venta procesada exitosamente:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('Error al procesar la venta:', error);
-    throw new Error('No se pudo procesar la venta');
-  }
-}
-
-async function createDirectoryIfNotExists(directory) {
-  if (!fs.existsSync(directory)) {
-    fs.mkdirSync(directory);
-  }
-}
-
-async function findComercio(numeroComercio) {
-  try {
-    console.log("entre a findcomercio");
-    const apiUrl = process.env.API_URL_COMERCIO_GET;
-    if (!apiUrl) {
-      console.log("ERROR: API_URL_COMERCIO_GET no está definido en el archivo .env o está vacío");
-      return null;
-    }
-
-    const fullUrl = apiUrl.endsWith('/') ? apiUrl + numeroComercio : apiUrl + numeroComercio;
-    console.log("URL completa para solicitud de comercio:", fullUrl);
-    if (!fullUrl.startsWith("http")) {
-      console.log("ERROR: La URL generada no es válida, revisa la configuración del archivo .env");
-      return null;
-    }
-
-    var config = {
-      method: "post",  // Cambiado a POST
-      url: fullUrl,
-      headers: {},
-    };
-
-    const response = await axios(config);
-    console.log("Número de comercio solicitado:", numeroComercio);
-
-    if (response.status !== 200) {
-      console.log("Error en la solicitud: código de estado", response.status);
-      return null;
-    }
-    return response.data;
-  } catch (e) {
-    console.log("Error al hacer la solicitud:", e.message);
-    emailLogger.error("ERROR flowMain isRegisterClient > " + e.stack);
-    return null;
-  }  
-}
-
-async function findCuotasComercio(numeroComercio) {
-  try {
-    const config = {
-      method: "get",
-      url: process.env.API_URL_CUOTAS_GET + numeroComercio,
-      headers: {},
-    };
-
-    const response = await axios(config);
-    return response.data;
-  } catch (e) {
-    emailLogger.error("ERROR flowMain getCuotasOptions > " + e.stack);
-    return null;
-  }
-}
 
 const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
   .addAnswer(".",
@@ -171,28 +18,27 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
       const cliente = await findCustomer(ctx);
 
       if (Object.keys(cliente).length > 0) {
-        return flowDynamic([{ body: `Recuerda que tu disponible para compras actual es de: ${cliente.disponible}` }]);
+        return flowDynamic([{ body: `Recuerda que tu saldo disponible para compras actual es de: ${cliente.disponible}` }]);
       } else {
         return flowDynamic(".");
       }
     }
   )
   .addAnswer(
-    "Para continuar *¿Me podrías proporcionar numero de comercio, por favor? Solo numeros (ej. 45000)* ",
+    "Para continuar *¿Me podrías proporcionar numero de comercio, por favor? Solo números (ej. 4500)* ",
     { capture: true },
     async (ctx, { fallBack, flowDynamic, state }) => {
       try {
         const comercioRegex = /^\d{1,6}$/;
         console.log("Número de comercio recibido: ", ctx.body);
         if (comercioRegex.test(ctx.body)) {
-          //flowDynamic([{ body: "Aguarda un instante.. estoy obteniendo los datos del comercio...!!!" }]);
           const comercio = await findComercio(ctx.body);
           if (comercio) {
             const infoCompra = {};
             infoCompra.comercio = comercio;
             infoCompra.numeroComercio = ctx.body;
             await state.update({ venta: infoCompra });
-            return await flowDynamic([{ body: "*Estas por realizar compra en : " + infoCompra.comercio.puntos[0].descrpto + "*" }]);
+            //return await flowDynamic([{ body: "*Estas por realizar compra en : " + infoCompra.comercio.puntos[0].descrpto + "*" }]);
           } else {
             console.log("Comercio no encontrado en la base de datos");
             return fallBack("Numero de comercio : " + ctx.body + " no encontrado en nuestras base de datos !!!!");
@@ -218,7 +64,7 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
     }
   )
   .addAnswer(
-    "Para continuar *¿Me podrías proporcionar el importe de la compra (ejemplo: 1000.00 ), por favor?*",
+    "Para continuar *¿Me podrías proporcionar el importe de la compra, por favor? (Ejemplo: 1000.00 )*",
     { capture: true },
     async (ctx, { fallBack, state }) => {
       const importeRegex = /^\d+(\.\d+)?$/;
@@ -226,7 +72,7 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
         const cliente = await findCustomer(ctx);
         await state.update({ importeCompra: parseFloat(ctx.body) });
       } else {
-        return fallBack("*El importe ingresado " + ctx.body + " no es valido por favor .. reingresalo (ejemplo: 1000.00 )*.");
+        return fallBack("*El importe ingresado " + ctx.body + " no es valido por favor .. reingresalo (Ejemplo: 1000.00 )*.");
       }
     }
   )
@@ -239,46 +85,40 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
         const importeCompraFirst = state.get("importeCompra");
         if (importeCompraFirst != parseFloat(ctx.body)) {
           return fallBack(
-            "*El importe ingresado  " + ctx.body + " no es coincide con el importe ingresado previamente*."
+            "*El importe ingresado $" + ctx.body + " no coincide con el importe ingresado previamente.*"
           );
         }
       } else {
         return fallBack(
-          "*El importe ingresado  " + ctx.body + " no es valido por favor .. reingresalo (ejemplo: 1000.00 )*."
+          "*El importe ingresado $" + ctx.body + " no es válido por favor .. reingresalo (ejemplo: 1000.00 )*."
         );
       }
     }
   )
   .addAnswer(
-    "Validando datos ingresados... ..",
+    "*Obteniendo opciones de pago. Aguarda un instante....!*",
     { capture: false },
     async (ctx, { flowDynamic, endFlow, state }) => {
       try {
         const compra = state.get("venta");
-        const importeCompra = state.get("importeCompra");
-        const planActivo = getSomePlanActive(compra.comercio, compra.numeroComercio); // Obtener el plan activo con prioridad
-        
+        const planActivo = findPlanActiveByComercio(compra.comercio, compra.numeroComercio); 
         compra.planActivo = planActivo;
-        await state.update({ venta: compra });
-
+          
         if (planActivo === 53) {
-          // Si el plan activo es Plan D (clavepln = 53)
-          flowDynamic([{
-            body: `*Confirmas compra en ${compra.comercio.puntos[0].descrpto} por un importe de $${importeCompra} en PLAN D?*`
-          }]);
+          compra.opcionesCuotas = [1]
         } else if (planActivo === 1) {
-          // Si el plan activo es de 1 cuota (clavepln = 1)
-          flowDynamic([{
-            body: `*Confirmas compra en ${compra.comercio.puntos[0].descrpto} por un importe de $${importeCompra} en 1 CUOTA?*`
-          }]);
+          compra.opcionesCuotas = [1];
         } else if (planActivo === 2) {
-          flowDynamic([{
-            body: `*Confirmas compra en ${compra.comercio.puntos[0].descrpto} por un importe de $${importeCompra} en 1 CUOTA -.?*`
-          }]);
+          compra.opcionesCuotas = [1,3,6,12];
         } else {
-          // Si no hay ningún plan disponible
-          return endFlow("Lo siento, no hay ningun Plan Activo disponible en este Comercio.");
+          return endFlow("Lo siento, no hay ningun Plan Activo disponible en este Comercio.!!! ");
         }
+        
+        await state.update({ venta: compra });
+        flowDynamic([{
+           body: `*Estas son las cuotas disponibles para el comercio: ${compra.comercio.puntos[0].descrpto}*\n\n*Cuotas disponibles:*\n${compra.opcionesCuotas.join('\n')}`
+        }]);
+
       } catch (error) {
         emailLogger.error(error.stack);
         logger.error(error.stack);
@@ -287,45 +127,76 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
     }
   )
   .addAnswer(
-    "*Para confirmar operacion ingresa tu numero de DNI.* (Ej: 22123456)",
+    "*Ingresa la cantidad de cuotas seleccionada en numeros, por favor.*",
+    { capture: true },
+    async (ctx, { fallBack, flowDynamic, state }) => {
+        const compra = state.get("venta");                
+        const cantidadCuotasRegex = /^\d{1,2}$/;
+        const importeCompra = state.get("importeCompra");
+        if (cantidadCuotasRegex.test(ctx.body)) {
+          const cuotasIngresadas = parseInt(ctx.body, 10);
+          if (compra.opcionesCuotas.includes(cuotasIngresadas)) {
+            compra.cuotasSeleccionadas = cuotasIngresadas; 
+            await state.update({ venta: compra });         
+            const leyendaCuotas = cuotasIngresadas !== 1 ? "cuotas" : "cuota";
+            await flowDynamic([{ body: `*Confirmas la compra en comercio: ${compra.comercio.puntos[0].descrpto} por un importe de $${importeCompra} en ${cuotasIngresadas} ${leyendaCuotas}*` }]);
+          } else {
+            return fallBack(`*La cantidad de cuotas ingresada no es válida. Por favor, elige entre las opciones disponibles: ${compra.opcionesCuotas.join(", ")}*`);
+          }
+        }else {
+          return fallBack("El numero de cuotas ingresado (" + ctx.body + ") no es válido !!! Por favor reingresalo.");
+        }
+    }
+)  
+  .addAnswer(
+    "*Por último, para confirmar operación ingresa tu numero de DNI. Solo números sin puntos*",
     { capture: true },
     async (ctx, { fallBack, endFlow, flowDynamic, state }) => {
       try {
-        let cantidadIntentos = 1;
+        const MAX_INTENTOS = 3;  // Límite de intentos permitidos
+        const cantidadIntentos = state.get("cantidadIntentos") || 1;
         const dniRegex = /^\d{1,8}$/;
         if (dniRegex.test(ctx.body)) {
           const dniIngresado = parseInt(ctx.body);
           const cliente = await findCustomer(ctx);
-          const compra = state.get("venta");
-          const planActivo = compra.planActivo;
 
           if (dniIngresado == cliente.documento) {
-            const transactionId = await procesarCompra(cliente, state);
-            await flowDynamic([
-              {
-                body: "*Operación exitosa. El número de transacción es  N°: " + transactionId + "*",
-                media: "https://i.postimg.cc/GmLjpD8M/descarga.png",
-              },
-            ]);
-            state.clear();
-            return endFlow("*Muchas Gracias. TENES SUERTE, TENES DATA!* ");
+            const result = await procesarCompra(cliente, state);
+            if (result.success) {
+              flowDynamic([
+                {
+                  body: result.message,
+                  media: "https://i.postimg.cc/GmLjpD8M/descarga.png",
+                },
+              ]);
+            }else {
+              flowDynamic([
+                {
+                  body: result.message
+                },
+              ]);
+            }
+            state.clear();            
+            return endFlow("Tenes Suerte, Tenes DATA!");  
           } else {
-            if (cantidadIntentos < 3) {
-              return fallBack("*EL NUMERO INGRESADO NO COINCIDE CON NUESTROS REGISTROS, REINGRESA EL NMUMERO DE DNI...!!!* ");
+            if (cantidadIntentos <= MAX_INTENTOS ) {
+              const cantidadIntentosActual = cantidadIntentos + 1;
+              await state.update({ cantidadIntentos:cantidadIntentosActual });                             
+
+              return fallBack("*EL NUMERO INGRESADO NO COINCIDE CON NUESTROS REGISTROS, REINGRESA EL NUMERO DE DNI...!!!* ");
             } else {
               emailLogger.error("INTENTO DE COMPRA QUE SUPERO LA CANTIDAD DE INGRESOS DE DNI : " + ctx.body + " EN EL CLIENTE DESDE EL TELEFONO : " + ctx.from);
-              return endFlow("*EL NUMERO DE DNI INGRESADO NO COINCIDE CON NUESTROS REGISTROS Y SUPERASTE LA CANTIDAD DE REINTENTOS...EL PROCESO SE CANCELARA !!!* ");
+              return endFlow("*EL NUMERO DE DNI INGRESADO NO COINCIDE CON NUESTROS REGISTROS Y SUPERASTE LA CANTIDAD DE REINTENTOS...EL PROCESO SE CANCELARA Y SERA NOTIFICADO POR MEDIDAS DE SEGURIDAD!!!* ");
             }
-            cantidadIntentos++;
           }
         } else {
-          return fallBack("*EL NUMERO INGRESADO NO ES VALIDO , SOLO SE ACEPTAN NUMEROS.. (Ej: 22159357) !!!* ");
+          return fallBack("*EL NUMERO INGRESADO NO ES VÁLIDO , SOLO SE ACEPTAN NUMEROS.. (Ej: 22159357) !!!* ");
         }
       } catch (error) {
         emailLogger.error(error.stack);
         logger.error(error.stack);
-        return endFlow("*OCURRIO UN ERROR PROCESANDO LA OPERACION REINTENTA LUEGO .... !! MUCHAS GRACIAS ");
-      }
+        return endFlow("*Ocurrió un error procesando la operación. Inténtalo nuevamente más tarde. Muchas gracias.*");
+      } 
     }
   );
 
