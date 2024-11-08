@@ -1,14 +1,11 @@
-//import dotenv from "dotenv";
-//dotenv.config();
-
-console.log("GOOGLE_SERVICE_ACCOUNT_EMAIL   >" + process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL);
-console.log("process.env.GOOGLE_PRIVATE_KEY >"+process.env.GOOGLE_PRIVATE_KEY);
-
 //import { JWT } from "google-auth-library";
 //import { GoogleSpreadsheet } from "google-spreadsheet";
 import { JWT } from 'google-auth-library';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
-import { logger, emailLogger } from '../../logger/logger.js';
+
+import dotenv from "dotenv";
+dotenv.config();
+
 
 
 const SCOPES = [
@@ -17,7 +14,6 @@ const SCOPES = [
 ];
 
 class GoogleSheetService {
-  
   jwtFromEnv = undefined;
   doc = undefined;
 
@@ -52,7 +48,7 @@ retriveActivePromos = async () => {
     await this.doc.loadInfo();
     const sheet = this.doc.sheetsByIndex[0]; // Asumiendo que las promociones están en la segunda hoja
     const rows = await sheet.getRows();
-    logger.info("CANTIDAD DE FILAS : " + rows.length);
+    console.log("CANTIDAD DE FILAS : " + rows.length);
     await sheet.loadCells('A1:E50');
     
     for (let i = 0; i <= rows.length; i++) {
@@ -61,14 +57,13 @@ retriveActivePromos = async () => {
       const startDate = sheet.getCell(i, 2).value; // Columna C
       const endDate = sheet.getCell(i, 3).value; // Columna D
       const promoImage = sheet.getCell(i, 4).value; // Columna E
-      /*
-      logger.info(">>>>>>>>>>>> FILA PROCESADA : " + i + " >>>>>>>>>>>>>>>>>>>>>>>>><<<<");
-      logger.info(`promoName: ${promoName}, Descripcion: ${promoDescription}`);
-      logger.info(`imagen: ${promoImage}`);
-      logger.info(`startDate: ${startDate}, EndDate: ${endDate}`);
-      logger.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<");
-      */
-     
+      
+      //console.log(">>>>>>>>>>>> FILA PROCESADA : " + i + " >>>>>>>>>>>>>>>>>>>>>>>>><<<<");
+      //console.log(`promoName: ${promoName}, Descripcion: ${promoDescription}`);
+      //console.log(`imagen: ${promoImage}`);
+      //console.log(`startDate: ${startDate}, EndDate: ${endDate}`);
+      //console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<");
+      
       if (!promoName || promoName === '') break; 
                 
       // Convertir las fechas a objetos Date
@@ -100,13 +95,12 @@ retriveActivePromos = async () => {
         });
       }
     }
-    logger.info("list SIZE : " + list.length);
+    console.log("list SIZE : " + list.length);
 
     return list;
   } catch (err) {
-      logger.error(err.stack);
-      emailLogger("ERROR OBTENIENDO LAS PROMOCIONES DE TARJETA DATA : ",err.stack)
-      return undefined;
+    console.error(err);
+    return undefined;
   }
 };
 

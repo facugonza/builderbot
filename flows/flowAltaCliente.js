@@ -1,21 +1,10 @@
 import { addKeyword } from '@builderbot/bot';
 import nodemailer from "nodemailer";
-//import { downloadMediaMessage } from '@whiskeysockets/baileys';
-import { readdirSync,writeFileSync, existsSync, mkdirSync } from "fs";
-//import { readdir } from 'fs/promises';
-
-import fs from 'fs-extra';
-import { join } from 'path';
+//import { downloadMediaMessage } from '@whiskeysockets/baileys'
+import { writeFileSync, readFileSync } from "fs";
 import { logger, emailLogger } from '../logger/logger.js';
 import databaseLogger from '../logger/databaseLogger.js';
 import acciones from '../models/acciones.js';
-
-const FILES_PATH = "../clientes/";
-//import { BaileysProvider  } from '@builderbot/provider-baileys'
-
-//import builderbotProvider from '@builderbot/provider-baileys';  // Importar el paquete completo
-//const { saveFile } = builderbotProvider;  // Extraer la función necesaria
-//import { saveFile } from '@builderbot/provider-baileys'
 
 let lead = {
   nombre: "",
@@ -36,7 +25,7 @@ async function sendEmail(files) {
       secure: false, // true para 465, false para otros puertos
       auth: {
         user: "facundogonzalez@tarjetadata.com.ar",
-        pass: "Facundo2000@*",
+        pass: "Facundo123",
       },
     });
 
@@ -66,30 +55,16 @@ async function sendEmail(files) {
     await transporter.sendMail(mailOptions);
     console.log("Email enviado exitosamente!");
   } catch (error) {
-    emailLogger.error("Error al enviar el email: "+ lead.telefono , error.stack);
+    emailLogger.error("Error al enviar el email: "+ lead.telefono , error);
   }
 }
 
 
 
 async function createDirectoryIfNotExists(directory) {
-  try{
-    if (!existsSync(directory)) {
-      mkdirSync(directory);
-    }else {
-      // Eliminar todos los archivos JPEG en el directorio
-      /*const files = await fs.readdir(directory);
-      for (const file of files) {
-        if (file.endsWith('.jpeg')) {
-          await fs.unlink(join(directory, file));
-        } 
-      }*/
-    }
-  }catch(error){
-    console.log(error);
-    emailLogger.error("ERROR createDirectoryIfNotExists :", error.stack);
+  if (!fs.existsSync(directory)) {
+    fs.mkdirSync(directory);
   }
-
 }
 
 function capturarRespuesta(ctx, fallBack, campo) {
@@ -171,92 +146,94 @@ const flowAltaCliente = addKeyword("solicitar" , {sensitive : false})
   .addAnswer(
     "*Por favor enviame una foto del frente del  DNI.* (Esto es obligatorio)"
     ,{capture : true},
-    async (ctx,{fallBack, provider }) => {
-      const userImagesDirectory = FILES_PATH+ctx.from; 
+    async (ctx,{fallBack}) => {
+      const userImagesDirectory = "./clientes/"+ctx.from; 
       await createDirectoryIfNotExists(userImagesDirectory);        
       try{
-        const localPath = await provider.saveFile(ctx, {path:userImagesDirectory});
-        console.log("FRENTE DNI >" + localPath);
+        //const buffer = await downloadMediaMessage(ctx, "buffer");
+        //await writeFileSync(userImagesDirectory+"/dni-frente.jpeg", buffer);
+        //console.log("FRENTE DNI > ");
         return;
       }catch(error){
-        console.error("FRENTE DNI ERROR > " + error.stack);
-        return fallBack("Ocurrio un error , por favor reintenta !! " );
+        console.log("FRENTE DNI ERRO > " + error);
+        return fallBack("Ocurrio un error , por favor reintenta !! " + error);
       }
     }  
   )
   .addAnswer(
     "*Excelente! Ahora enviame una foto del dorso del DNI.* (Esto es obligatorio)"
     ,{capture : true},
-    async (ctx,{fallBack,provider}) => {  
-      const userImagesDirectory = FILES_PATH+ctx.from; 
+    async (ctx,{fallBack}) => {  
+      const userImagesDirectory = "./clientes/"+ctx.from; 
       await createDirectoryIfNotExists(userImagesDirectory);        
       try{
-        const localPath = await provider.saveFile(ctx, {path:userImagesDirectory});
-        console.log("FRENTE DORSO > " +localPath);
+        //const buffer = await downloadMediaMessage(ctx, "buffer");
+        //writeFileSync(userImagesDirectory+"/dni-dorso.jpeg", buffer);
+        console.log("FRENTE DORSO > ");
         return; 
       }catch(error){
-        return fallBack("Ocurrio un error , por favor reintenta !! " );
+        return fallBack("Ocurrio un error , por favor reintenta !! " + error);
       }
     }  
   )    
   .addAnswer(
     "Ahora, enviame una foto de una boleta de servicio. *Si no tienes una, solo envie una foto en blanco*.",
     {capture : true},
-    async (ctx,{fallBack,provider}) => {  
+    async (ctx,{fallBack}) => {  
       try{
-        const userImagesDirectory = FILES_PATH+ctx.from; 
-        const localPath = await provider.saveFile(ctx, {path:userImagesDirectory});
-        console.log("BOLETA SERVICIO > " +localPath);
-        return; 
+        //const buffer = await downloadMediaMessage(ctx, "buffer");
+        //await writeFileSync("./clientes/"+ctx.from+"/boleta-servicio.jpeg", buffer);
       }catch(error){
-        logger.error(error.stack)
-        return fallBack("Ocurrio un error , por favor reintenta !! ");
+        return fallBack("Ocurrio un error , por favor reintenta !! " + error);
       }
     }
   )
   .addAnswer(
     "Ahora enviame una foto de certificacion de ingresos (Ej: recibo de sueldo o boleta pago del monotributo). *Si no tiene, solo envie una foto en blanco*",
     {capture : true},
-    async (ctx,{fallBack,provider}) => {  
+    async (ctx,{fallBack}) => {  
       try{
-        const userImagesDirectory = FILES_PATH+ctx.from; 
-        const localPath = await provider.saveFile(ctx, {path:userImagesDirectory});
-        console.log("CERTIFICADO INGRESOS > " +localPath);
-        return; 
+        //const buffer = await downloadMediaMessage(ctx, "buffer");
+        //await writeFileSync("./clientes/"+ctx.from+"/certificado-ingresos.jpeg", buffer);
       }catch(error){
-        console.error(error.stack);
-        return fallBack("Ocurrio un error , por favor reintenta !! ");
+        return fallBack("Ocurrio un error , por favor reintenta !! " + error);
       }     
     }
   )
   .addAnswer(
     "Excelente !!! He derivado toda la documentacion a un asesor , el cual te contactara...Muchas gracias por completar el proceso por este medio!!! "
   )
+  /*
+  .addAction(
+    async (ctx) => {  
+      try{
+        let data = JSON.stringify(lead, null, 2);
+        fs.writeFile("./clientes/"+ctx.from+"/"+ctx.from+ ".json", data, (err) => {
+            if (err) throw err;
+            console.log('Datos guardados en miarchivo.json');
+        }); 
+      }catch(error){
+        return fallBack("Ocurrio un error , por favor reintenta !! " + error);
+      }     
+    }
+  );
+    */
   .addAction(
     async (ctx) => {
       try {
         let data = JSON.stringify(lead, null, 2);
-        fs.writeFileSync(FILES_PATH + ctx.from + "/" + ctx.from + ".json", data);
-        
-        const userImagesDirectory = FILES_PATH + ctx.from; 
-        /*
+        fs.writeFileSync("./clientes/" + ctx.from + "/" + ctx.from + ".json", data);
+  
         const files = [
           { path: "./clientes/" + ctx.from + "/dni-frente.jpeg", name: "dni-frente.jpeg" },
           { path: "./clientes/" + ctx.from + "/dni-dorso.jpeg", name: "dni-dorso.jpeg" },
           { path: "./clientes/" + ctx.from + "/boleta-servicio.jpeg", name: "boleta-servicio.jpeg" },
           { path: "./clientes/" + ctx.from + "/certificado-ingresos.jpeg", name: "certificado-ingresos.jpeg" },
         ];
-        */
-        const files = (await fs.readdir(userImagesDirectory))
-        .filter(file => file.endsWith('.jpeg'))
-        .map(file => ({
-          path: join(userImagesDirectory, file),
-          name: file
-        }));
-
+  
         await sendEmail(files);
       } catch (error) {
-        console.error("Ocurrió un error, por favor reintenta!", error.stack);
+        console.error("Ocurrió un error, por favor reintenta!", error);
       }
     }
   );

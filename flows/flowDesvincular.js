@@ -1,18 +1,23 @@
-//import dotenv from "dotenv";
-//dotenv.config();
+import dotenv from "dotenv";
+dotenv.config();
+
 
 import { addKeyword } from '@builderbot/bot';
 import { setClienteData } from "../models/clienteDATA.js";
 import { findCustomer } from "../services/dataclientes/clienteService.js";
 import axios from "axios";
 
+let datosCliente= {
+    numeroTelefono:"",
+    dni:"",
+}
 
-const desvincularCuenta = async (datosCliente) => {
-    console.log(" desvincularCuenta : " + datosCliente.dni + "/ "+ datosCliente.numeroTelefono ) ;
+
+const desvincularCuenta = async () => {
     try {
       var config = {
         method: "POST",
-        url: "http://200.70.56.203:8021/AppMovil/DesvincularCliente",
+        url: process.env.API_URL_DESVINCULAR, //"http://200.70.56.203:8021/AppMovil/DesvincularCliente",
         headers: {
           "Content-Type": "application/json",
         },
@@ -22,7 +27,7 @@ const desvincularCuenta = async (datosCliente) => {
       const response = await axios(config);
       return response.data;
     } catch (e) {
-      console.log("ERROR desvincularCuenta : " +e);
+      console.log("ERROR : "+e);
       return null;
     }
   };
@@ -30,24 +35,23 @@ const desvincularCuenta = async (datosCliente) => {
 
 const flowDesvincular = addKeyword("desvincular", {sensitive : false})
   .addAnswer(
-    "Confirmas desvincular este numero de telefono de cuenta ? , responde *SI o NO* para confirmar o cancelar",
+    "Confirmas la desvincular numero de telefono de cuenta ? , responde *SI o NO* para confirmar o cancelar",
     { capture: true },
     async (ctx, { endFlow ,flowDynamic }) => {
-      const cliente = await findCustomer(ctx);
-      if (Object.keys(cliente).length > 0){                
+      const cliente = findCustomer(ctx);
+
+      if (Object.keys(cliente).length > 0){        
+        setClienteData(ctx,{});
         if (ctx.body.toLowerCase() == "si") {
-            const datosCliente= {};
             datosCliente.numeroTelefono  = ctx.from;
             datosCliente.dni  = cliente.documento; 
-            const desvincularCliente = await desvincularCuenta(datosCliente);
-            setClienteData(ctx,{});
-            if (desvincularCliente!=null && desvincularCliente.success){                
+            const desvincularCliente = await desvincularCuenta();
+            if (desvincularCliente!=null && desvincularCliente.success){
                 return endFlow("Desvinculamos este numero (*+"+ctx.from+"*) de Telefono del Cliente *:"+cliente.apellido + " " + cliente.nombre+ "* !!") ;        
             }else {
               return flowDynamic("*No se pudo procesar la solicitud en este momento .... reintenta luego !!*") ;        
             }
         } else {
-          setClienteData(ctx,{});
           return endFlow("*OPERACION CANCELADA*. Si tienes más preguntas o necesitas ayuda, no dudes en contactarme nuevamente. *Tenes suerte .. Tenes DATA !!*");
         } 
       }

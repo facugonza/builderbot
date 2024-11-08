@@ -8,14 +8,9 @@ import acciones from '../models/acciones.js';
 
 
 function extractImportFromBarCode(barcode) {
-    if (barcode) {
-        const importPart = barcode.slice(-10, -2);
-        logger.info(importPart);
-        return parseFloat(importPart) / 100;
-    } else {
-        logger.error("Barcode is undefined or null");
-        return null; // Otra acción adecuada en caso de que barcode sea indefinido o nulo
-    }
+    const importPart = barcode.slice(-9, -2);
+    logger.info(importPart);
+    return parseFloat(importPart) / 100;
 }
   
 function formatFechaResumen(dateString) {
@@ -38,9 +33,8 @@ const flowLinkPagoMP = addKeyword("pagar", {sensitive : false})
             const messages = [];
             const fechaResumen = cliente.resumenfecha ; //formatFechaResumen(cliente.resumenfecha);
             await flowDynamic([{ body: "*Aguarda un instante... generando tus links de pagos para resumen con vto "+fechaResumen+"....!!!*" }]);
-            logger.info("*************************************");
-            logger.info("Cliente > " + cliente);
-            logger.info("*************************************");
+            
+            logger.info("fechaResumen > " + fechaResumen);
             if(cliente.barcodepland !== ""){
                 const pagoPlanD = extractImportFromBarCode(cliente.barcodepland);
                 if (pagoPlanD>0){                

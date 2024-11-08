@@ -22,7 +22,7 @@ log4js.configure({
                 port: 465,
                 auth: {
                     user: 'facundogonzalez@tarjetadata.com.ar',
-                    pass: 'Facundo2000@*'
+                    pass: 'Facundo123'
                 }
             }
         }

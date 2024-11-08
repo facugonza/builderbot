@@ -1,5 +1,4 @@
-//import dotenv from "dotenv";
-//dotenv.config();
+import dotenv from "dotenv";
 
 import { addKeyword, EVENTS } from '@builderbot/bot';
 import { findCustomer } from "../services/dataclientes/clienteService.js";
@@ -11,6 +10,8 @@ import databaseLogger from '../logger/databaseLogger.js';
 import { getClienteData } from "../models/clienteDATA.js";
 import acciones from '../models/acciones.js';
 
+
+dotenv.config();
 
 const flowMain = addKeyword(EVENTS.WELCOME)
   .addAnswer(

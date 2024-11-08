@@ -1,11 +1,9 @@
-import dotenv from "dotenv";
-dotenv.config();
-
 import { addKeyword } from '@builderbot/bot';
 import { getClienteData, setClienteData } from "../models/clienteDATA.js";
 import { logger, emailLogger } from '../logger/logger.js';
 
-
+import dotenv from "dotenv";
+dotenv.config();
 
 async function findComercio(numeroComercio) {
     try {

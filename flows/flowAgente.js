@@ -62,7 +62,7 @@ const flowAgente = addKeyword("operador", {sensitive : false})
           const insertId = await createGroup(ctx.from, groupCreated.id, ID_GROUP, cliente.documento);          
           logger.log('Grupo insertado con éxito, ID:', insertId);
         }catch(error){
-          logger.error('Error insertando Grupo Code:', ID_GROUP  + "  > " + error.stack);
+          logger.log('Error insertando Grupo Code:', ID_GROUP);
         }  
         
         return flowDynamic([{ body: addedGroupMessage }]);
