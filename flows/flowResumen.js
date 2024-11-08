@@ -25,9 +25,9 @@ const flowResumen = addKeyword("resumen",{sensitive : false})
                 flowDynamic([{body: "Obteniendo tu ultimo resumen DATA generado con vencimiento "+cliente.resumenfecha+". *Aguarda unos instantes...*"}]);    
                 
                 //const resumenURL = 'http://200.70.56.202:8080/ResumenOnLine2/ResumenOnLine?tipodocu=3&nrodocu='+ cliente.documento;
-                //const resumenURL = 'https://seguro.tarjetadata.com.ar/ResumenImpresionREST/webresources/impresionResumen/generarResumenPDF/'+ cliente.resumennumero;
+                const resumenURL = 'https://seguro.tarjetadata.com.ar/ResumenImpresionREST/webresources/impresionResumen/generarResumenPDF/'+ cliente.resumennumero;
                 
-                const resumenURL = 'http://200.70.56.202:8180/ResumenImpresionREST/webresources/impresionResumen/generarResumenPDF/'+ cliente.resumennumero;
+                //const resumenURL = 'http://200.70.56.202:8180/ResumenImpresionREST/webresources/impresionResumen/generarResumenPDF/'+ cliente.resumennumero;
                 await flowDynamic([
                     {
                     body: "Resumen N° " + cliente.resumennumero,
@@ -39,7 +39,8 @@ const flowResumen = addKeyword("resumen",{sensitive : false})
                 ]);    
                 if (cliente.hasVisaSummary){
                     flowDynamic([{body: "Obteniendo tu ultimo resumen VISA generado con vencimiento para el cliente : "+cliente.apellido+". *Aguarda unos instantes...*"}]);    
-                    const resumenVISA = 'http://200.70.56.202:8180/ServiciosDataVisaREST/webresources/resumen/visa/download/numerodocumento/'+ cliente.documento;                
+                    //const resumenVISA = 'http://200.70.56.202:8180/ServiciosDataVisaREST/webresources/resumen/visa/download/numerodocumento/'+ cliente.documento;                
+                    const resumenVISA = 'https://seguro.tarjetadata.com.ar/ServiciosDataVisaREST/webresources/resumen/visa/download/numerodocumento/'+ cliente.documento;                
                     await flowDynamic([
                         {
                         body: "Resumen N° " + cliente.documento,
@@ -48,7 +49,7 @@ const flowResumen = addKeyword("resumen",{sensitive : false})
                     ]);                     
                 }
 
-            }catch(errror){
+            }catch(error){
                 flowDynamic([{body: "en estos momentos no puedo procesar la opcion solicitada .. *reintenta mas tarde*"}]);    
                 console.log(error);
             }

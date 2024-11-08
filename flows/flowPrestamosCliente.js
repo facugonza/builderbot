@@ -7,8 +7,6 @@ import { findCustomer } from "../services/dataclientes/clienteService.js";
 import databaseLogger from '../logger/databaseLogger.js';
 import acciones from '../models/acciones.js';
 
-
-
 const flowPrestamosCliente = addKeyword("PRESTAMO", { sensitive: false })
     .addAnswer(".",
         { capture: false },
@@ -57,7 +55,7 @@ const flowPrestamosCliente = addKeyword("PRESTAMO", { sensitive: false })
             }
         }
       }catch(error){
-        logger.error("Error validando el monto ingresado en la simulacion del prestamo :", error);
+        logger.error("Error validando el monto ingresado en la simulacion del prestamo :", error.stack);
       }
     }
   )
@@ -79,7 +77,7 @@ const flowPrestamosCliente = addKeyword("PRESTAMO", { sensitive: false })
             });
             await flowDynamic([{ body: mensajeCuotas }]);
         } catch (error) {
-            emailLogger.error("Error al obtener cuotas habilitadas:", error);
+            emailLogger.error("Error al obtener cuotas habilitadas:", error.stack);
             return endFlow("*Lo siento, ocurrió un error al obtener las cuotas disponibles. Por favor, inténtalo de nuevo más tarde.*");            
             
         }
@@ -108,12 +106,12 @@ const flowPrestamosCliente = addKeyword("PRESTAMO", { sensitive: false })
                 console.log("PSAE EL FLOW DINAMYC"); 
 
                 const clienteData = getClienteData(ctx);
-                const resultado = await servicePrestamos.calcularFinanciacion(
+                const resultado = await calcularFinanciacion(
                     clienteData.capitalSolicitado, 
                     clienteData.cuotas, 
                     clienteData.diavencimiento
                 );
-                 console.log("PSAE EL LLAMAOD A CALCUL ODE FGINANACUIIONB"); 
+                logger.info("PASE EL LLAMADO DE CALCULO DE FINANCIACION : "); 
 
                 let detallesFinanciacion = `*Detalles de la financiación:*\n*TNA:* ${resultado.tna}%\n*CFT:* ${resultado.cft}%\n*Detalles de las cuotas:*\n`;
                 resultado.cuotas.forEach(cuota => {
@@ -127,11 +125,16 @@ const flowPrestamosCliente = addKeyword("PRESTAMO", { sensitive: false })
                 
                 clienteData.detallesFinanciacion = detallesFinanciacion; 
                 setClienteData(ctx, clienteData);
-
-                return endFlow("Acercate a nuestra Sucursal mas cercana.*\n *SUJETO A EVALUACION* \n *Tenes suerte .. Tenes DATA !!*");
+                if (ctx.from === "54264736151" || ctx.from === "549264481-4441"){ 
+                
+                } else {
+                  return endFlow("Acercate a nuestra Sucursal mas cercana.*\n *SUJETO A EVALUACION* \n *Tenes suerte .. Tenes DATA !!*");
+                } 
+                
 
             } catch (error) {
-                emailLogger.error("Error al calcular la financiación:", error);
+                logger.error("Error al calcular la financiación:", error.stack);
+                emailLogger.error("Error al calcular la financiación:", error.stack);
                 //await flowDynamic([{ body: "*Lo siento, ocurrió un error al calcular la financiación. Por favor, inténtalo de nuevo más tarde.....*" }]);
                 return endFlow("*Lo siento, ocurrió un error al calcular la financiación. Por favor, inténtalo de nuevo más tarde.....*");
             }
@@ -160,15 +163,16 @@ const flowPrestamosCliente = addKeyword("PRESTAMO", { sensitive: false })
                   clienteData.capitalSolicitado, 
                   clienteData.cuotas
               );
-              console.log("******************************PRESTAMO GENARACION ****************************************************");
-              console.log(resultado); 
-              console.log("******************************************************************************************************");
-              if (resultado.estado == "APROBADO"  &&  resultado.tipo == 1 ){
-                await flowDynamic([{ body: "*FELICITACIONES EL PRESTAMO FUE GENERADO EXISTOSAMENTE !!!, EL DINERO ESTARA DISPONIBLE EN CUALQUIER SUCURSAL DE TARJETA DATA*" }]);
+              logger.info("******************************PRESTAMO GENARACION ****************************************************");
+              logger.info(resultado); 
+              logger.info("******************************************************************************************************");
+              
+              if (resultado.estado == "APROBADO"  &&  resultado.tipo == 1 ){                
+                await flowDynamic([{ body: "*FELICITACIONES EL PRESTAMO FUE GENERADO EXITOSAMENTE !!!, EL DINERO ESTARA DISPONIBLE EN CUALQUIER SUCURSAL DE TARJETA DATA - Transaccion N° " + resultado.datos.venta + "*" }]);
                 emailLogger.error("PRESTAMO OTORGADO A " + ctx.from + " POR UN TOTAL DE "+ clienteData.capitalSolicitado );  
               }else {
                 emailLogger.error("Error al Otorgar un Prestamo :", resultado);
-                await flowDynamic([{ body: resultado.estado }]);
+                await flowDynamic([{ body: "NO SE PUDO PROCESAR EL PRESTAMO : " + resultado.estado }]);
               } 
             }
             //return endFlow("*Promocion valida solo por 24hs - Acercate a nuestra Sucursal mas cercana.*\n *SUJETO A EVALUACION CREDITICIA.* \n *Tenes suerte .. Tenes DATA !!*");

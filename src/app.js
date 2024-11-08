@@ -1,4 +1,14 @@
-import { join } from 'path'
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from 'url';
+
+// Convertir import.meta.url a __dirname equivalente
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Carga el archivo .env desde la raíz del proyecto
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
 import { createBot, createProvider, createFlow, addKeyword, utils } from '@builderbot/bot'
 import { MemoryDB as Database } from '@builderbot/bot'
 import { BaileysProvider as Provider } from '@builderbot/provider-baileys'
@@ -19,7 +29,8 @@ import flowDisponible from "../flows/flowDisponible.js";
 import flowMovimientos from "../flows/flowCompras.js";
 import flowLinkPagoMP from "../flows/flowLinkPagoMP.js";
 
-
+//process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
+import https from 'https';
 
 //const { createBot, createProvider, createFlow, addKeyword } = require('@bot-whatsapp/bot')
 //import { MysqlDB } from '@builderbot/database-mysql'
@@ -39,6 +50,7 @@ const MYSQL_DB_PORT = "3306";
 //global.cliente ={};
 
 const main = async () => {
+    
     //const adapterDBMock = new MockAdapter();
     /*
     const adapterDB = new MysqlDB({
@@ -61,16 +73,21 @@ const main = async () => {
         provider: adapterProvider,
         database: adapterDB,
     })
-
+    
+    /*
     adapterProvider.server.post(
         '/v1/messages',
         handleCtx(async (bot, req, res) => {
-            const { number, message, urlMedia } = req.body
+            const  number = "5492644736151";
+            const  message = "DATABOT ALIVE";
+            urlMedia= null;
+            //const { number, message, urlMedia } = req.body
             await bot.sendMessage(number, message, { media: urlMedia ?? null })
             return res.end('sended')
         })
     )
-
+    */
+    /*
     adapterProvider.server.post(
         '/v1/register',
         handleCtx(async (bot, req, res) => {
@@ -100,8 +117,31 @@ const main = async () => {
             return res.end(JSON.stringify({ status: 'ok', number, intent }))
         })
     )
-
-    httpServer(+PORT)    
+    */
+    adapterProvider.server.get('/health', (req, res) => {
+        const  number = "5492644736151";
+        const  message = "DATABOT ALIVE";
+        try{
+            //console.log("SENDING MESSAGE TO : " + number);
+            //adapterProvider.sendMessage(number, message, { media: null });
+            //console.log("MESSAGE SENT: " + "DATABOT ALIVE"  + " to "+ number);
+    
+            res.writeHead(200, { 'Content-Type': 'text/plain' });
+            res.end('OK');
+        }catch(error){
+            res.writeHead(503, { 'Content-Type': 'text/plain' });
+            res.end('FAIL');
+        }
+    });
+    
+    httpServer(+PORT);   
+    try{
+        const  number = "5492644736151";
+        const  message = "DATABOT STARTING";        
+        adapterProvider.sendMessage(number, message, { media: null });
+    }catch(error){
+        console.error(error.stack);
+    }
 }
 
 
