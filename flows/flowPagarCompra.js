@@ -10,8 +10,7 @@ import PDFDocument from 'pdfkit';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
- // Cálculo del monto de cada cuota usando el monto confirmado y el número de cuotas de transactionDetails
- //dejar comentado esto const montoPorCuota = (transactionDetails.monto / transactionDetails.cuotas).toFixed(2);
+
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -54,16 +53,16 @@ async function generateTransactionPDF(transactionDetails) {
   
   doc
     .moveDown(1.5)
-    .fontSize(32)
+    .fontSize(28)
     .fillColor('#000000')
     .text(`TOTAL $ ${transactionDetails.monto.toFixed(2)}`, { align: "left" })
     .moveDown(0.5);  
 
   doc
-    .fontSize(18)
+    .fontSize(16)
     .fillColor('#555555')
-    .moveDown(0.5)
-    .text(`En ${transactionDetails.cuotas} cuota${transactionDetails.cuotas > 1 ? 's' : ''} x $${montoPorCuota}`, { align: "left" })
+    .moveDown(0.2)
+    .text(`En ${transactionDetails.cuotas} cuota${transactionDetails.cuotas > 1 ? 's' : ''} x $${transactionDetails.montoPorCuota}`, { align: "left" })
     .moveDown(1);  
   
   doc
@@ -77,19 +76,27 @@ async function generateTransactionPDF(transactionDetails) {
 // sección "Para" 
 doc
 .moveDown(1.5)
-.fontSize(20)
+.fontSize(16)
 .fillColor('#333333')
-.text(`COMERCIO: ${transactionDetails.comercio}`, { align: "left"  })
+.text(`COMERCIO`, { align: "left"  })
+.moveDown(0.5)
+.fontSize(12)
+.text(`Número Comercio: ${transactionDetails.numeroComercio}`, { align: "left"  })
+.text(`Nombre Comercio: ${transactionDetails.comercio}`, { align: "left"  })
 .moveDown(1.5);
 
 
 // seccion "de"
 doc
   .moveDown(1.2)
-  .fontSize(20)
+  .fontSize(16)
   .fillColor('#333333')
-  .text(`CLIENTE: ${transactionDetails.clienteNombre}`, { align: "left" })
-  .moveDown(1.5);
+  .text(`CLIENTE`, { align: "left" })
+  .moveDown(0.5)
+  .fontSize(12)
+  .text(`Nombre y Apellido: ${transactionDetails.clienteNombre}`, { align: "left" })
+  .text(`Últimos 4 Digitos de la Tajeta: ${transactionDetails.ultimosCuatroDigitos}`, { align: "left" })
+  .moveDown(1);
   
 // Número de transacción
   doc
@@ -99,7 +106,7 @@ doc
     .text("Número de operación:", 50, doc.y + 30,  { align: "center" })
     .moveDown(0.5)
     .fontSize(12)
-    .text(transactionDetails.transaccionId, { align: "left", color: '#0000FF' })
+    .text(transactionDetails.transaccionId, { align: "center", color: '#0000FF' })
     .moveDown(2);  
 
   // pie de paginna
@@ -324,12 +331,13 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
             const cuotasIngresadas = parseInt(ctx.body, 10);
 
             if (compra.opcionesCuotas.includes(cuotasIngresadas)) {
-                compra.cuotasSeleccionadas = cuotasIngresadas;
-                await state.update({ venta: compra });
+                compra.cuotasSeleccionadas = cuotasIngresadas;               
 
                 const leyendaCuotas = cuotasIngresadas !== 1 ? "cuotas" : "cuota";
                 const importeEnLetras = numeroALetras(importeCompra); 
-                
+                compra.montoPorCuota = (importeCompra / cuotasIngresadas).toFixed(2);  
+                await state.update({ venta: compra });
+
                 await flowDynamic([{
                     body: `*Confirmas la compra en comercio: ${compra.comercio.puntos[0].descrpto} por un importe de $${importeCompra} (${importeEnLetras}) en ${cuotasIngresadas} ${leyendaCuotas}*`
                 }]);
@@ -345,7 +353,7 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
 .addAnswer(
   "*Por último, para confirmar operación ingresa tu número de DNI. Solo números sin puntos*",
   { capture: true },
-  async (ctx, { fallBack, endFlow, flowDynamic, state, provider }) => {
+  async (ctx, { fallBack, endFlow, flowDynamic, state }) => {
     try {
       const dniRegex = /^\d{1,8}$/;
       if (dniRegex.test(ctx.body)) {
@@ -355,20 +363,30 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
         if (dniIngresado === cliente.documento) {
           const result = await procesarCompra(cliente, state);
           if (result.success) {
-          const numAutorizacion = result.num_autorizacion || "Sin Número de Autorización";
-            
-           
+            const numAutorizacion = result.num_autorizacion || "Sin Número de Autorización";
+
+           function ultimosCuatroDigitos(plastico) {
+               if (!plastico) {
+                   return "Número no disponible"; 
+               }
+               const ultimos4Digitos = plastico.slice(-4); 
+               const asteriscos = '*'.repeat(plastico.length - 4); 
+               return `${asteriscos}${ultimos4Digitos}`; 
+           }
+
             const transactionDetails = {
               id: new Date().getTime(), 
               fechaHora: new Date().toLocaleString(),
               monto: state.get("importeCompra"),
               clienteNombre: `${cliente.nombre} ${cliente.apellido}`,
-              comercio: state.get("venta").comercio.puntos[0]?.descrpto || "sin descripción",
-              cuotas: state.get("venta").cuotasSeleccionadas || 1,
-              transaccionId: numAutorizacion,
-             
-            
+              comercio: state.get("venta").comercio.puntos[0]?.descrpto ,
+              numeroComercio: state.get("venta").numeroComercio, 
+              cuotas: state.get("venta").cuotasSeleccionadas ,
+              transaccionId: result.num_autorizacion,
+              montoPorCuota: state.get("venta").montoPorCuota,              
+              ultimosCuatroDigitos: ultimosCuatroDigitos(cliente.plastico),
             };
+
             
             
             const pdfPath = await generateTransactionPDF(transactionDetails);
@@ -393,6 +411,7 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
         return fallBack("El número ingresado no es válido, intenta nuevamente.");
       }
     } catch (error) {
+      console.log(error.stack);
       emailLogger.error(error.stack);
       return endFlow("Ocurrió un error al procesar la operación. Inténtalo más tarde.");
     }

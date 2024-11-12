@@ -109,6 +109,7 @@ async function procesarCompra(cliente, state) {
     if (data && data.error_code === 1) {
       logger.info('Compra procesada exitosamente:', data);
       const messageSuccess = {
+        num_autorizacion: data.num_autorizacion,
         success: true,
         message: `*Operación exitosa.* Código de autorización N°: ${data.num_autorizacion}.`
       };
