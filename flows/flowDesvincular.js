@@ -28,30 +28,39 @@ const desvincularCuenta = async (datosCliente) => {
   };
   
 
-const flowDesvincular = addKeyword("desvincular", {sensitive : false})
+  const flowDesvincular = addKeyword("desvincular", { sensitive: false })
   .addAnswer(
-    "Confirmas desvincular este numero de telefono de cuenta ? , responde *SI o NO* para confirmar o cancelar",
+    "⚠️ *¿Confirmas desvincular este número de teléfono de la cuenta?*\nResponde *SI* o *NO* para confirmar o cancelar.",
     { capture: true },
-    async (ctx, { endFlow ,flowDynamic }) => {
+    async (ctx, { endFlow, flowDynamic }) => {
       const cliente = await findCustomer(ctx);
-      if (Object.keys(cliente).length > 0){                
-        if (ctx.body.toLowerCase() == "si") {
-            const datosCliente= {};
-            datosCliente.numeroTelefono  = ctx.from;
-            datosCliente.dni  = cliente.documento; 
-            const desvincularCliente = await desvincularCuenta(datosCliente);
-            setClienteData(ctx,{});
-            if (desvincularCliente!=null && desvincularCliente.success){                
-                return endFlow("Desvinculamos este numero (*+"+ctx.from+"*) de Telefono del Cliente *:"+cliente.apellido + " " + cliente.nombre+ "* !!") ;        
-            }else {
-              return flowDynamic("*No se pudo procesar la solicitud en este momento .... reintenta luego !!*") ;        
-            }
+
+      if (Object.keys(cliente).length > 0) {
+        if (ctx.body.toLowerCase() === "si") {
+          const datosCliente = {};
+          datosCliente.numeroTelefono = ctx.from;
+          datosCliente.dni = cliente.documento;
+
+          const desvincularCliente = await desvincularCuenta(datosCliente);
+          setClienteData(ctx, {});
+
+          if (desvincularCliente != null && desvincularCliente.success) {
+            return endFlow(
+              `✅ *Desvinculamos este número (+${ctx.from})* del cliente: *${cliente.apellido} ${cliente.nombre}*.\n¡Gracias por usar nuestro servicio!`
+            );
+          } else {
+            return flowDynamic(
+              "❌ *No se pudo procesar la solicitud en este momento.* Por favor, reintenta más tarde. 🙏"
+            );
+          }
         } else {
-          setClienteData(ctx,{});
-          return endFlow("*OPERACION CANCELADA*. Si tienes más preguntas o necesitas ayuda, no dudes en contactarme nuevamente. *Tenes suerte .. Tenes DATA !!*");
-        } 
+          setClienteData(ctx, {});
+          return endFlow(
+            "🚫 *OPERACIÓN CANCELADA.*\nSi tienes más preguntas o necesitas ayuda, no dudes en contactarme nuevamente.\n*¡Tenés suerte... tenés DATA!* 🎉"
+          );
+        }
       }
     }
   );
 
-  export default  flowDesvincular;
+export default flowDesvincular;

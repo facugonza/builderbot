@@ -14,19 +14,16 @@ import acciones from '../models/acciones.js';
 
 const flowMain = addKeyword(EVENTS.WELCOME)
   .addAnswer(
-      ["Hola, soy *DATABOT* tu asistente virtual .",
-      "*Aguarda un instante, estoy verificando si este numero esta asociado a un cliente....*"],
-     null, 
-    async (ctx, { gotoFlow,flowDynamic }) => {
-        try{
-          
-          databaseLogger.addLog(
-            ctx.from,
-            acciones.HOME
-          );
-    
+    [
+      "👋 ¡Hola! Soy *DATABOT*, tu asistente virtual. 🤖",
+      "⏳ *Aguarda un instante, estoy verificando si este número está asociado a un cliente...*",
+    ],
+    null,
+    async (ctx, { gotoFlow, flowDynamic }) => {
+      try {
+        databaseLogger.addLog(ctx.from, acciones.HOME);
 
-          const cliente = await findCustomer(ctx);       
+        const cliente = await findCustomer(ctx);       
 
           if(cliente!=null && cliente.isLogin){  
               //endFlow = true;          

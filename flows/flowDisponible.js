@@ -6,27 +6,29 @@ import databaseLogger from '../logger/databaseLogger.js';
 import acciones from '../models/acciones.js';
 
 
-const flowDisponible = addKeyword("saldo", {sensitive : false})
-.addAnswer(".", {delay : 500},
-  async(ctx,{ endFlow,flowDynamic} ) => {
-      const cliente = await findCustomer(ctx);
+const flowDisponible = addKeyword("saldo", { sensitive: false })
+  .addAnswer(".", { delay: 500 }, async (ctx, { endFlow, flowDynamic }) => {
+    const cliente = await findCustomer(ctx);
 
-      if (Object.keys(cliente).length > 0){
-        await flowDynamic([{body: "Aguarda un instante , *estoy obteniendo tu disponible para compras....*"}]);    
-        //await delay(1000);
-        await flowDynamic("*El disponible actual de tu tarjeta es de $ "+ cliente.disponible +"*");
+    if (Object.keys(cliente).length > 0) {
+      await flowDynamic([
+        {
+          body: "⏳ *Aguarda un instante, estoy obteniendo tu disponible para compras...*",
+        },
+      ]);
 
-        setClienteData(ctx,{});
-        
+      await flowDynamic(
+        `💳 *El disponible actual de tu tarjeta es de $${cliente.disponible}.*`
+      );
 
-        databaseLogger.addLog(
-           ctx.from,
-          acciones.SALDO
-        );
-          
-        return endFlow("Si tienes más preguntas o necesitas ayuda, no dudes en contactarme nuevamente. *Tenes suerte .. Tenes DATA !!*");
-      }
-  }
-);
+      setClienteData(ctx, {});
 
-export default  flowDisponible;
+      databaseLogger.addLog(ctx.from, acciones.SALDO);
+
+      return endFlow(
+        "✅ Si tienes más preguntas o necesitas ayuda, no dudes en contactarme nuevamente. *¡Tenés suerte... tenés DATA!* 🎉"
+      );
+    }
+  });
+
+export default flowDisponible;

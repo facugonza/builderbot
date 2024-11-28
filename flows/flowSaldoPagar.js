@@ -2,21 +2,33 @@ const { addKeyword } = require("@bot-whatsapp/bot");
 const { getClienteData,setClienteData } = require("../models/clienteDATA");
 const { findCustomer } = require("../services/dataclientes/clienteService");
 
-const flowSaldoPagar = addKeyword("deuda", {sensitive : false})
-.addAnswer(".", {delay : 1000},
-  async(ctx,{flowDynamic} ) => {
-    const cliente = await findCustomer(ctx);
-    
-    if (Object.keys(cliente).length > 0){
-      await flowDynamic([{body: "Aguarda un instante , *estoy obteniendo el total del ultimo resumen....*"}]);    
-      await flowDynamic(
-          "*El saldo a pagar de su ultimo resumen es de $ "+ cliente.resumentotal +"*"        
-      );
-      setClienteData(ctx,{});
+const flowSaldoPagar = addKeyword("deuda", { sensitive: false })
+  .addAnswer(
+    ".",
+    { delay: 1000 },
+    async (ctx, { flowDynamic }) => {
+      const cliente = await findCustomer(ctx);
+
+      if (Object.keys(cliente).length > 0) {
+        await flowDynamic([
+          {
+            body: "⏳ *Aguarda un instante, estoy obteniendo el total del último resumen...*",
+          },
+        ]);
+        await flowDynamic([
+          {
+            body: `💳 *El saldo a pagar de tu último resumen es de: $${cliente.resumentotal}.*`,
+          },
+        ]);
+        setClienteData(ctx, {});
+      }
     }
-  }
-)
-.addAnswer("Si tienes más preguntas o necesitas ayuda, no dudes en contactarme nuevamente. *Tenes suerte .. Tenes DATA !!*");
+  )
+  .addAnswer(
+    "✅ *Si tienes más preguntas o necesitas ayuda, no dudes en contactarme nuevamente.*\n🎉 *¡Tenés suerte... tenés DATA!*"
+  );
+
+
 
 /*
 .addAnswer("1) ¿Deseas consultar tu saldo disponible? responde *saldo* \n\n" + 

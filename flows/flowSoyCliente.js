@@ -22,15 +22,15 @@ const opcionesPermitidas = ["SALDO", "MOVIMIENTOS","PRESTAMO", "RESUMEN", "OPERA
 const flowSoyCliente = addKeyword("SoyClientedeTarjetaDATA", {sensitive : false})
 .addAnswer(
     [
-      "*-* Para pagar una compra. Responde *COMPRAR* ", "",
-      "*-* Simular Prestamo. Responde *PRESTAMO* ", "",      
-      "*-* Consultar tu saldo disponible. Responde *SALDO*", "",
-      "*-* Descargar un resumen de tu cuenta. Responde *RESUMEN*", "", 
-      "*-* Pagar Resumen actual. Responde *PAGAR*", "", 
-      "*-* Conocer tus ultimos movimientos. Responde *MOVIMIENTOS*", "",      
-      "*-* Hablar con un operador humano. Responde *OPERADOR* ", "",       
-      "*-* Conocer nuestras promociones vigentes. Responde *PROMOS*", "",
-      "*-* Desvincular este numero de telefono de la cuenta? Responde *DESVINCULAR*", 
+      "*-* Para pagar una compra. Responde *COMPRAR* 💵", "",
+      "*-* Simular Prestamo. Responde *PRESTAMO*  💸 ", "",      
+      "*-* Consultar tu saldo disponible. Responde *SALDO*  💰", "",
+      "*-* Descargar un resumen de tu cuenta. Responde *RESUMEN* 📄", "", 
+      "*-* Pagar Resumen actual. Responde *PAGAR* 💳", "", 
+      "*-* Conocer tus ultimos movimientos. Responde *MOVIMIENTOS 📊*", "",      
+      "*-* Hablar con un operador humano. Responde *OPERADOR* 🗣", "",       
+      "*-* Conocer nuestras promociones vigentes. Responde *PROMOS* 🎁", "",
+      "*-* Desvincular este numero de telefono de la cuenta? Responde *DESVINCULAR* 🔗", 
     ],
   {capture : true},
   async (ctx, {endFlow, fallBack}) => {
@@ -43,7 +43,7 @@ const flowSoyCliente = addKeyword("SoyClientedeTarjetaDATA", {sensitive : false}
     */   
 
     if (!opcionesPermitidas.includes(ctx.body.toUpperCase())) {
-       return fallBack("Lo siento, *"+ctx.body+"* no es una opción válida. Por favor, intenta de nuevo.*(SALDO,COMPRAS,RESUMEN,PAGAR,PRESTAMO,OPERADOR,PROMOS,DESVINCULAR)*");
+       return fallBack("🚫Lo siento, *"+ctx.body+"* no es una opción válida. Por favor, intenta de nuevo.*(SALDO,COMPRAS,RESUMEN,PAGAR,PRESTAMO,OPERADOR,PROMOS,DESVINCULAR)*");
     }
 
   },
