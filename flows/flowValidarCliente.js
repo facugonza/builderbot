@@ -34,7 +34,7 @@ const asociarCliente = async (datosCliente) => {
 
 const flowValidarCliente = addKeyword("cliente", {sensitive : false})
   .addAnswer(
-    ["¡Claro! Antes de continuar, necesito validar DNI. ¿Me podrías proporcionar numero de DNI, por favor?"],
+    ["👋¡Claro! Antes de continuar, necesito validar DNI. ¿Me podrías proporcionar numero de DNI, por favor?"],
     { capture: true },
     async (ctx, { fallBack ,state }) => {
         state.clear();
@@ -45,14 +45,14 @@ const flowValidarCliente = addKeyword("cliente", {sensitive : false})
           await state.update({dni:ctx.body, numeroTelefono:ctx.from})
         } else {
           return fallBack(
-            "¿Puedes Verificar el numero ingresado ? Gracias."
+            "⚠️ ¿Puedes Verificar el numero ingresado ? Gracias."
           );
         } 
     
     },
   )
   .addAnswer(
-    "¡Perfecto!. ¿Me podrías proporcionar tu fecha de nacimiento, por favor? {DD/MM/YYYY}",
+    "📅¡Perfecto!. ¿Me podrías proporcionar tu fecha de nacimiento, por favor? {DD/MM/YYYY}",
     { capture: true },
     async (ctx, { fallBack ,state}) => {
         console.log("flowValidarCliente  > NACIMIENTO: " + ctx.body);
@@ -61,13 +61,13 @@ const flowValidarCliente = addKeyword("cliente", {sensitive : false})
             await state.update({fechaNacimiento:ctx.body})
         } else {
           return fallBack(
-            "¿Puedes Verificar la fecha ingresada. *EJ: 01/09/1990*  ? Gracias."
+            "⚠️ ¿Puedes Verificar la fecha ingresada. *EJ: 01/09/1990*  ? Gracias."
           );
         }  
     }
   )
   .addAnswer(
-    "¡Casi Terminamos! por ultimo. ¿Me podrías proporcionar los ultimos 4 digitos de tu Tarjeta DATA, por favor? {####}",
+    "💳 ¡Casi Terminamos! por ultimo. ¿Me podrías proporcionar los ultimos 4 digitos de tu Tarjeta DATA, por favor? {####}",
     { capture: true },
     async (ctx, { fallBack ,state}) => {
         console.log("flowValidarCliente  > 4 DIGITOS :" + ctx.body);
@@ -76,21 +76,21 @@ const flowValidarCliente = addKeyword("cliente", {sensitive : false})
             await state.update({ultimosCuatroDigitos:ctx.body})
         } else {
           return fallBack(
-            "¿Puedes Verificar los digitos ingresados. *EJ: 1234*  ? Gracias."
+            "⚠️ ¿Puedes Verificar los digitos ingresados. *EJ: 1234*  ? Gracias."
           );
         }  
     }
   )  
-  .addAnswer( "Muchas gracias !! Aguarda un instante por favor ...estoy validando tus datos !!!",
+  .addAnswer( "⏳ Muchas gracias !! Aguarda un instante por favor ...estoy validando tus datos !!!",
     { capture: false },
     async (ctx, { flowDynamic,endFlow ,state}) => {
       const cliente = await asociarCliente(state.getMyState());
       console.log("flowValidarCliente ultimo addAnswer  : " + cliente);        
       if (cliente!=null && cliente.isLogin){
-        await flowDynamic("Felicitaciones asociamos este numero (*+"+ctx.from+"*) de Telefono al Cliente :"+cliente.apellido + " " + cliente.nombre+ ", Tenes Suerte , Tenes DATA !!!") ;        
-        return endFlow("Muchas gracias por registrarte ... por favor envia un mensaje nuevamente para iniciar como cliente registrado !!!");
+        await flowDynamic("🎉 Felicitaciones asociamos este numero (*+"+ctx.from+"*) de Telefono al Cliente :"+cliente.apellido + " " + cliente.nombre+ ", Tenes Suerte , Tenes DATA !!!") ;        
+        return endFlow("✅ Muchas gracias por registrarte ... por favor envia un mensaje nuevamente para iniciar como cliente registrado !!!");
       }else {
-        return endFlow("*La informacion proporcionada no coincide con ninguno de nuestros registros.. por favor verificala !!!*");
+        return endFlow("❌ *La informacion proporcionada no coincide con ninguno de nuestros registros.. por favor verificala !!!*");
       }
     }  
   );

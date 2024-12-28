@@ -14,8 +14,8 @@ import acciones from '../models/acciones.js';
 
 const flowMain = addKeyword(EVENTS.WELCOME)
   .addAnswer(
-      ["Hola, soy *DATABOT* tu asistente virtual .",
-      "*Aguarda un instante, estoy verificando si este numero esta asociado a un cliente....*"],
+      ["👋 Hola, soy *DATABOT* tu asistente virtual 🤖.",
+      "⏳ *Aguarda un instante, estoy verificando si este numero esta asociado a un cliente....*"],
      null, 
     async (ctx, { gotoFlow,flowDynamic }) => {
         try{
