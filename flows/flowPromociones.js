@@ -6,7 +6,7 @@ import databaseLogger from '../logger/databaseLogger.js';
 import acciones from '../models/acciones.js';
 
 const flowPromociones = addKeyword("promo")
-.addAnswer("*Te comparto nuestras Promociones vigentes:*", { delay: 1000 }, async (ctx, { endFlow, flowDynamic }) => {
+.addAnswer("🎉*Te comparto nuestras Promociones vigentes:*", { delay: 1000 }, async (ctx, { endFlow, flowDynamic }) => {
   try {
     databaseLogger.addLog(
       ctx.from,
@@ -18,16 +18,16 @@ const flowPromociones = addKeyword("promo")
 
     if (activePromos && activePromos.length > 0) {
       const formattedPromos = activePromos.map(promo => ({
-        body: `*${promo.name} : ${promo.description} -* \n *– Vigencia desde ${promo.startDate} al ${promo.endDate}.*`,
+        body: `🎁 *${promo.name} : ${promo.description} -* \n 📅 *– Vigencia desde ${promo.startDate} al ${promo.endDate}.*`,
         media: promo.image // Asegúrate de que tus datos de promoción incluyan una URL de imagen
       }));
       await flowDynamic(formattedPromos);
     } else {
-      await flowDynamic([{ body: "*Actualmente no hay promociones activas.*" }]);
+      await flowDynamic([{ body: "📭 *Actualmente no hay promociones activas.*" }]);
     }
 
     setClienteData(ctx, {});
-    return endFlow("Si tienes más preguntas o necesitas ayuda, no dudes en contactarme nuevamente. *Tenes suerte .. Tenes DATA !!*");
+    return endFlow("✅ Si tienes más preguntas o necesitas ayuda, no dudes en contactarme nuevamente. *Tenes suerte .. Tenes DATA !!*");
   } catch (error) {
     logger.error("ERROR flowPromociones > " + error.stack );
     emailLogger.error("ERROR flowPromociones > " + error.stack );

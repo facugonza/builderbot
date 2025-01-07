@@ -25,7 +25,7 @@ const checkLastMessageTime = async () => {
         logger.info('lastMessageTime > ' +  lastMessageTime ); 
         logger.info('timeDiff        > ' +  timeDiff );
 
-        if (timeDiff > 15) {
+        if (timeDiff > 5) {
             logger.warn('No se han registrado mensajes en los últimos 15 minutos, reiniciando la aplicación...');
             emailLogger.warn('No se han registrado mensajes en los últimos 15 minutos, reiniciando la aplicación...');
             restartApp();
@@ -39,7 +39,7 @@ const checkLastMessageTime = async () => {
 }
 
 const checkAppStatus = () => {
-    exec('pm2 status app', (err, stdout, stderr) => {
+    exec('pm2 status databot', (err, stdout, stderr) => {
         logger.info("START TO CHECK DATABOT STATUS ....");
         checkHealthEndpoint();
         logger.info("FINISHED CHECK DATABOT STATUS ....");
@@ -85,7 +85,7 @@ const checkHealthEndpoint = () => {
     req.on('error', (e) => {
         logger.info('Error al verificar el endpoint de salud, reiniciando...',e);
         emailLogger.info('Error al verificar el endpoint de salud, reiniciando...');
-        exec('pm2 restart app', (err, stdout, stderr) => {
+        exec('pm2 restart databot', (err, stdout, stderr) => {
             if (err) {
                 logger.error(`Error reiniciando la aplicación: ${stderr}`);
                 emailLogger.error(`Error reiniciando la aplicación: ${stderr}`);
@@ -101,7 +101,7 @@ const checkHealthEndpoint = () => {
 
 
 const restartApp = () => {
-    exec('pm2 restart app', (err, stdout, stderr) => {
+    exec('pm2 restart databot', (err, stdout, stderr) => {
         if (err) {
             logger.error(`Error reiniciando la aplicación: ${stderr}`);
             emailLogger.error(`Error reiniciando la aplicación: ${stderr}`);
@@ -114,7 +114,7 @@ const restartApp = () => {
 
 
 // Verificar el estado de la aplicación , verificando el ultim mensaje procesado cada 15 minutos
-setInterval(checkLastMessageTime, 15 * 60 * 1000);
+setInterval(checkLastMessageTime, 10 * 60 * 1000);
 //setInterval(checkAppStatus, 15 * 60 * 1000);
 
 

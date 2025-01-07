@@ -8,15 +8,15 @@ const flowSaldoPagar = addKeyword("deuda", {sensitive : false})
     const cliente = await findCustomer(ctx);
     
     if (Object.keys(cliente).length > 0){
-      await flowDynamic([{body: "Aguarda un instante , *estoy obteniendo el total del ultimo resumen....*"}]);    
+      await flowDynamic([{body: "⏳ Aguarda un instante , *estoy obteniendo el total del ultimo resumen....*"}]);    
       await flowDynamic(
-          "*El saldo a pagar de su ultimo resumen es de $ "+ cliente.resumentotal +"*"        
+          "💳 *El saldo a pagar de su ultimo resumen es de $ "+ cliente.resumentotal +"*"        
       );
       setClienteData(ctx,{});
     }
   }
 )
-.addAnswer("Si tienes más preguntas o necesitas ayuda, no dudes en contactarme nuevamente. *Tenes suerte .. Tenes DATA !!*");
+.addAnswer("✅ Si tienes más preguntas o necesitas ayuda, no dudes en contactarme nuevamente. *Tenes suerte .. Tenes DATA !!*");
 
 /*
 .addAnswer("1) ¿Deseas consultar tu saldo disponible? responde *saldo* \n\n" + 

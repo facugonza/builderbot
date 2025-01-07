@@ -12,8 +12,8 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 // Verifica si las variables se cargaron correctamente
-console.log("GOOGLE_SERVICE_ACCOUNT_EMAIL:", process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL);
-console.log("GOOGLE_PRIVATE_KEY:", process.env.GOOGLE_PRIVATE_KEY ? "Cargada correctamente" : "No cargada o es undefined");
+console.log("GOOGLE_SERVICE_ACCOUNT_EMAIL TEST:", process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL);
+console.log("GOOGLE_PRIVATE_KEY TEST:", process.env.GOOGLE_PRIVATE_KEY ? "Cargada correctamente" : "No cargada o es undefined");
 
 // Si necesitas ver el valor completo de GOOGLE_PRIVATE_KEY, puedes descomentar la siguiente línea:
 // console.log("GOOGLE_PRIVATE_KEY:", process.env.GOOGLE_PRIVATE_KEY);

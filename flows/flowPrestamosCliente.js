@@ -23,21 +23,21 @@ const flowPrestamosCliente = addKeyword("PRESTAMO", { sensitive: false })
           if (Object.keys(cliente).length > 0){
             try{              
               if (cliente.disponibleprestamo> 0 ){
-                return flowDynamic([{ body: `*Recuerda que el monto maximo que puedo ofrecerte por este medio es de ${cliente.disponibleprestamoformated}*` }]);
+                return flowDynamic([{ body: `💰💸 *Recuerda que el monto maximo que puedo ofrecerte por este medio es de ${cliente.disponibleprestamoformated}*` }]);
               }else {
                 console.log("cliente.disponibleprestamo > " +cliente.disponibleprestamo);
 
-                return endFlow(`Actualmente no puedo ofrecerte opciones de Prestamo ..  Muchas gracias.`);
+                return endFlow(`❌ Actualmente no puedo ofrecerte opciones de Prestamo ..  Muchas gracias.`);
               }
             }catch(error){
-              return endFlow(`Ocurrio error obteniendo tu disponible para prestamo, por favor reintenta luego .. Muchas gracias`);
+              return endFlow(`⚠️ Ocurrio error obteniendo tu disponible para prestamo, por favor reintenta luego .. Muchas gracias`);
             }
           }else {
             return endFlow("Envia palabra *HOLA* para comenzar..");
           }
         }
     ).addAnswer(
-        "¡Vamos a Simular tu Préstamo! Por favor, dime cuánto dinero necesitas. *Ingresa el monto en números con un minino de $ 5000.00 sin puntos ni comas (ejemplo: 10000).*",
+        "💸 ¡Vamos a Simular tu Préstamo! 📊 Por favor, dime cuánto dinero necesitas. *Ingresa el monto en números con un minino de $ 5000.00 sin puntos ni comas (ejemplo: 10000).*",
     { capture: true },
     async (ctx, { fallBack }) => {
       try{
@@ -51,7 +51,7 @@ const flowPrestamosCliente = addKeyword("PRESTAMO", { sensitive: false })
               cliente.capitalSolicitado = parseFloat(ctx.body);
               setClienteData(ctx, cliente);
             } else {
-              return fallBack(`*Por favor, ingresa un monto válido que sea mayor a $5.000,00 y no exceda ${cliente.disponibleprestamoformated}.*`);
+              return fallBack(`⚠️ *Por favor, ingresa un monto válido que sea mayor a $5.000,00 y no exceda ${cliente.disponibleprestamoformated}.*`);
             }
         }
       }catch(error){
@@ -60,12 +60,12 @@ const flowPrestamosCliente = addKeyword("PRESTAMO", { sensitive: false })
     }
   )
   .addAnswer(
-    "*Puedes elegir entre las siguientes opciones de cuotas:*",
+    "📅 *Puedes elegir entre las siguientes opciones de cuotas:*",
     { capture: false },
     async (ctx, { endFlow, flowDynamic }) => {
         try {
             const cuotasDisponibles = await obtenerCuotasHabilitadas();
-            let mensajeCuotas = "*Cantidad de opciones disponibles para la financiación:*\n";
+            let mensajeCuotas = "📊*Cantidad de opciones disponibles para la financiación:*\n";
             let i = 1;
             cuotasDisponibles.cuotas.forEach(cuota => {                
                 if (i==1){
@@ -78,13 +78,13 @@ const flowPrestamosCliente = addKeyword("PRESTAMO", { sensitive: false })
             await flowDynamic([{ body: mensajeCuotas }]);
         } catch (error) {
             emailLogger.error("Error al obtener cuotas habilitadas:", error.stack);
-            return endFlow("*Lo siento, ocurrió un error al obtener las cuotas disponibles. Por favor, inténtalo de nuevo más tarde.*");            
+            return endFlow("⚠️*Lo siento, ocurrió un error al obtener las cuotas disponibles. Por favor, inténtalo de nuevo más tarde.*");            
             
         }
     }
 )
   .addAnswer(
-    "*¿En cuántas cuotas deseas devolver el préstamo? Ingresa una de las opciones disponibles.(Solo Números. ej:3)*",
+    "🤔*¿En cuántas cuotas deseas devolver el préstamo? 🔢 Ingresa una de las opciones disponibles.(Solo Números. ej:3)*",
     { capture: true },
     async (ctx, { fallBack }) => {
       const cuotasRegex = /^\d+$/;
@@ -93,11 +93,11 @@ const flowPrestamosCliente = addKeyword("PRESTAMO", { sensitive: false })
         clienteData.cuotas = parseInt(ctx.body);
         setClienteData(ctx, clienteData);
       } else {
-        return fallBack("Por favor, ingresa un número válido de cuotas.");
+        return fallBack("⚠️ Por favor, ingresa un número válido de cuotas.");
       }
     }
   )
-  .addAnswer("*Estoy buscando la mejor propuesta para ofrecerte. Dame unos momentos para personalizarla.....*",
+  .addAnswer("🔍 *Estoy buscando la mejor propuesta para ofrecerte.⏳ Dame unos momentos para personalizarla.....*",
         {capture:false},
         async (ctx, { flowDynamic,endFlow}) => {
             try {
@@ -113,7 +113,7 @@ const flowPrestamosCliente = addKeyword("PRESTAMO", { sensitive: false })
                 );
                 logger.info("PASE EL LLAMADO DE CALCULO DE FINANCIACION : "); 
 
-                let detallesFinanciacion = `*Detalles de la financiación:*\n*TNA:* ${resultado.tna}%\n*CFT:* ${resultado.cft}%\n*Detalles de las cuotas:*\n`;
+                let detallesFinanciacion = `💸 *Detalles de la financiación:*\n*TNA:* ${resultado.tna}%\n*CFT:* ${resultado.cft}%\n*Detalles de las cuotas:*\n`;
                 resultado.cuotas.forEach(cuota => {
                     detallesFinanciacion += `*Cuota* ${cuota.cuota}° *- Vto:* ${cuota.fecha} *- Total:* $${cuota.total}\n`;
                 });
@@ -128,7 +128,7 @@ const flowPrestamosCliente = addKeyword("PRESTAMO", { sensitive: false })
                 if (ctx.from === "54264736151" || ctx.from === "549264481-4441"){ 
                 
                 } else {
-                  return endFlow("Acercate a nuestra Sucursal mas cercana.*\n *SUJETO A EVALUACION* \n *Tenes suerte .. Tenes DATA !!*");
+                  return endFlow("🏢 Acercate a nuestra Sucursal mas cercana.*\n 📋 *SUJETO A EVALUACION* \n *Tenes suerte .. Tenes DATA !!*");
                 } 
                 
 
@@ -136,7 +136,7 @@ const flowPrestamosCliente = addKeyword("PRESTAMO", { sensitive: false })
                 logger.error("Error al calcular la financiación:", error.stack);
                 emailLogger.error("Error al calcular la financiación:", error.stack);
                 //await flowDynamic([{ body: "*Lo siento, ocurrió un error al calcular la financiación. Por favor, inténtalo de nuevo más tarde.....*" }]);
-                return endFlow("*Lo siento, ocurrió un error al calcular la financiación. Por favor, inténtalo de nuevo más tarde.....*");
+                return endFlow("⚠️ *Lo siento, ocurrió un error al calcular la financiación. Por favor, inténtalo de nuevo más tarde.....*");
             }
         }
     )

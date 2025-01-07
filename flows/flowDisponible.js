@@ -12,9 +12,9 @@ const flowDisponible = addKeyword("saldo", {sensitive : false})
       const cliente = await findCustomer(ctx);
 
       if (Object.keys(cliente).length > 0){
-        await flowDynamic([{body: "Aguarda un instante , *estoy obteniendo tu disponible para compras....*"}]);    
+        await flowDynamic([{body: "⏳ Aguarda un instante , *estoy obteniendo tu disponible para compras....*"}]);    
         //await delay(1000);
-        await flowDynamic("*El disponible actual de tu tarjeta es de $ "+ cliente.disponible +"*");
+        await flowDynamic("💳 *El disponible actual de tu tarjeta es de $ "+ cliente.disponible +"*");
 
         setClienteData(ctx,{});
         
@@ -24,7 +24,7 @@ const flowDisponible = addKeyword("saldo", {sensitive : false})
           acciones.SALDO
         );
           
-        return endFlow("Si tienes más preguntas o necesitas ayuda, no dudes en contactarme nuevamente. *Tenes suerte .. Tenes DATA !!*");
+        return endFlow("✅ Si tienes más preguntas o necesitas ayuda, no dudes en contactarme nuevamente. *Tenes suerte .. Tenes DATA !!*");
       }
   }
 );

@@ -1,5 +1,13 @@
-//import dotenv from "dotenv";
-//dotenv.config();
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from 'url';
+
+// Convertir import.meta.url a __dirname equivalente
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Carga el archivo .env desde la raíz del proyecto
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 console.log("GOOGLE_SERVICE_ACCOUNT_EMAIL   >" + process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL);
 console.log("process.env.GOOGLE_PRIVATE_KEY >"+process.env.GOOGLE_PRIVATE_KEY);

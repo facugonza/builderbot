@@ -9,6 +9,13 @@ const __dirname = path.dirname(__filename);
 // Carga el archivo .env desde la raíz del proyecto
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Promesa no manejada:', promise, 'razón:', reason);
+    console.trace(); // Muestra el rastro de la pila
+    process.exit(1);  // Forzar la terminación del proceso para evitar loops infinitos
+});
+
+
 import { createBot, createProvider, createFlow, addKeyword, utils } from '@builderbot/bot'
 import { MemoryDB as Database } from '@builderbot/bot'
 import { BaileysProvider as Provider } from '@builderbot/provider-baileys'
@@ -135,6 +142,7 @@ const main = async () => {
     });
     
     httpServer(+PORT);   
+    /*
     try{
         const  number = "5492644736151";
         const  message = "DATABOT STARTING";        
@@ -142,6 +150,7 @@ const main = async () => {
     }catch(error){
         console.error(error.stack);
     }
+    */
 }
 
 
