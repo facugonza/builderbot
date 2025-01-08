@@ -394,3 +394,4 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
   );
 
 export default flowPagarCompras;
+   

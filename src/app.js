@@ -139,6 +139,45 @@ const main = async () => {
             res.end('FAIL');
         }
     });
+ 
+    
+    adapterProvider.server.post('/notifySale', (req, res) => {
+        const { number, message } = req.body;
+        try {
+            console.log("SENDING MESSAGE TO : " + number);
+            adapterProvider.sendMessage(number, message, { media: null });
+            console.log("MESSAGE SENT: " + "SALE DATA" + " to " + number);
+    
+            res.writeHead(200, { 'Content-Type': 'text/plain' });
+            res.end('OK');
+        } catch (error) {
+            res.writeHead(503, { 'Content-Type': 'text/plain' });
+            res.end('FAIL');
+        }
+    });
+
+    adapterProvider.server.post('/recibirventa', async (req, res) => {
+        //const  number = "5492644736151";
+        //const  message = "DATABOT ALIVE";
+        const { number,message } = req.body;
+        try {
+            const refProvider = await adapterProvider.getInstance();
+            if (refProvider && refProvider.vendor) {
+                await refProvider.vendor.sendMessage(number, message); // Usa await para sendMessage
+                console.log("Mensaje enviado:", message, "a", number);
+                res.writeHead(200, { 'Content-Type': 'text/plain' });
+                res.end('OK');
+            } else {
+                console.error("Vendor no inicializado.");
+                res.writeHead(503, { 'Content-Type': 'text/plain' });
+                res.end('FAIL');
+            }
+        } catch (error) {
+            console.error("Error enviando el mensaje de salud:", error);
+            res.writeHead(503, { 'Content-Type': 'text/plain' });
+            res.end('FAIL');
+        }
+    });
 
     // Inicia el servidor HTTP
     httpServer(+PORT);
