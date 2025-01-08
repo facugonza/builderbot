@@ -10,6 +10,7 @@ import PDFDocument from 'pdfkit';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+
  // Cálculo del monto de cada cuota usando el monto confirmado y el número de cuotas de transactionDetails
  //dejar comentado esto const montoPorCuota = (transactionDetails.monto / transactionDetails.cuotas).toFixed(2);
 
@@ -188,21 +189,18 @@ function numeroALetras(num) {
 
 
 const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
-  .addAnswer(".",
-    { capture: false },
-    async (ctx, { flowDynamic, state }) => {
-      state.clear();
-      const cliente = await findCustomer(ctx);
+  .addAnswer("🛍️.", { capture: false }, async (ctx, { flowDynamic, state }) => {
+    state.clear();
+    const cliente = await findCustomer(ctx);
 
-      if (Object.keys(cliente).length > 0) {
-        return flowDynamic([{ body: `Recuerda que tu saldo disponible para compras actual es de: ${cliente.disponible}` }]);
-      } else {
-        return flowDynamic(".");
-      }
+    if (Object.keys(cliente).length > 0) {
+      return flowDynamic([{ body: `🤑 Recuerda que tu saldo disponible para compras actual es de: ${cliente.disponible}` }]);
+    } else {
+      return flowDynamic("❌.");
     }
-  )
+  })
   .addAnswer(
-    "Para continuar *¿Me podrías proporcionar numero de comercio, por favor? Solo números (ej. 4500)* ",
+    "🛒 Para continuar *¿Me podrías proporcionar número de comercio, por favor? Solo números (ej. 4500)*",
     { capture: true },
     async (ctx, { fallBack, flowDynamic, state }) => {
       try {
@@ -215,14 +213,13 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
             infoCompra.comercio = comercio;
             infoCompra.numeroComercio = ctx.body;
             await state.update({ venta: infoCompra });
-            //return await flowDynamic([{ body: "*Estas por realizar compra en : " + infoCompra.comercio.puntos[0].descrpto + "*" }]);
           } else {
             console.log("Comercio no encontrado en la base de datos");
-            return fallBack("Numero de comercio : " + ctx.body + " no encontrado en nuestras base de datos !!!!");
+            return fallBack("⚠️ Numero de comercio : " + ctx.body + " no encontrado en nuestras base de datos !!!!");
           }
         } else {
           console.log("Número de comercio no válido: ", ctx.body);
-          return fallBack("El numero de comercio (" + ctx.body + ") no es válido !!! Reingresalo.");
+          return fallBack("❌ El numero de comercio (" + ctx.body + ") no es válido !!! Reingresalo.");
         }
       } catch (error) {
         console.log("Error al buscar el comercio: ", error.stack);
@@ -232,28 +229,28 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
     }
   )
   .addAnswer(
-    "Aguarda un instante... estoy obteniendo los datos del comercio.",
+    "⏳ Aguarda un instante... estoy obteniendo los datos del comercio.",
     { capture: false },
     async (ctx, { flowDynamic, state }) => {
       const compra = await state.get("venta");
       const comercio = compra.comercio;
-      await flowDynamic([{ body: "*Estas por realizar compra en :" + comercio.puntos[0].descrpto + "*" }]);
+      await flowDynamic([{ body: `📍 *Estas por realizar compra en : ${comercio.puntos[0].descrpto}*` }]);
     }
   )
   .addAnswer(
-    "Para continuar *¿Me podrías proporcionar el importe de la compra, por favor? (Ejemplo: 1000.00 )*",
+    "💰 Para continuar *¿Me podrías proporcionar el importe de la compra, por favor? (Ejemplo: 1000.00 )*",
     { capture: true },
     async (ctx, { fallBack, state }) => {
       const importeRegex = /^\d+(\.\d+)?$/;
       if (importeRegex.test(ctx.body)) {
         await state.update({ importeCompra: parseFloat(ctx.body) });
       } else {
-        return fallBack("*El importe ingresado " + ctx.body + " no es valido por favor .. reingresalo (Ejemplo: 1000.00 )*.");
+        return fallBack("*❌ El importe ingresado " + ctx.body + " no es valido por favor .. reingresalo (Ejemplo: 1000.00 )*.");
       }
     }
   )
   .addAnswer(
-    "*Por favor reingresa nuevamente el importe para confirmarlo y continuar con la operacion.*",
+    "🔄 *Por favor reingresa nuevamente el importe para confirmarlo y continuar con la operacion.*",
     { capture: true },
     async (ctx, { fallBack, state }) => {
       const importeRegex = /^\d+(\.\d+)?$/;
@@ -261,18 +258,18 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
         const importeCompraFirst = state.get("importeCompra");
         if (importeCompraFirst != parseFloat(ctx.body)) {
           return fallBack(
-            "*El importe ingresado $" + ctx.body + " no coincide con el importe ingresado previamente.*"
+            "⚠️ *El importe ingresado $" + ctx.body + " no coincide con el importe ingresado previamente.*"
           );
         }
       } else {
         return fallBack(
-          "*El importe ingresado $" + ctx.body + " no es válido por favor .. reingresalo (ejemplo: 1000.00 )*."
+          "❌ *El importe ingresado $" + ctx.body + " no es válido por favor .. reingresalo (ejemplo: 1000.00 )*."
         );
       }
     }
   )
   .addAnswer(
-    "*Obteniendo opciones de pago. Aguarda un instante.*",
+    "💳 *Obteniendo opciones de pago. Aguarda un instante.*",
     { capture: false },
     async (ctx, { flowDynamic, endFlow, state }) => {
       try {
@@ -288,14 +285,14 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
         } else if (planActivo === 2) {
           compra.opcionesCuotas = [1, 3, 6, 12];
         } else {
-          return endFlow("Lo siento, no hay ningun Plan Activo disponible en este Comercio. ");
+          return endFlow("❌ Lo siento, no hay ningun Plan Activo disponible en este Comercio. ");
         }
 
         
         const importeCompra = state.get("importeCompra");
         
         
-        let mensajeCuotas = `*Estas son las cuotas disponibles para el comercio: ${compra.comercio.puntos[0].descrpto}*\n\n*Cuotas disponibles:*`;
+        let mensajeCuotas = `✅ *Estas son las cuotas disponibles para el comercio: ${compra.comercio.puntos[0].descrpto}*\n\n💳 *Cuotas disponibles:*`;
         compra.opcionesCuotas.forEach(cuota => {
           const valorCuota = (importeCompra / cuota).toFixed(2);  
           mensajeCuotas += `\n${cuota} cuota${cuota > 1 ? 's' : ''} x $${valorCuota}`;
@@ -307,13 +304,13 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
       } catch (error) {
         emailLogger.error(error.stack);
         logger.error(error.stack);
-        return endFlow("*OCURRIO UN ERROR PROCESANDO LA OPERACION REINTENTA LUEGO .... !! MUCHAS GRACIAS ");
+        return endFlow("❌ *OCURRIO UN ERROR PROCESANDO LA OPERACION REINTENTA LUEGO .... !! MUCHAS GRACIAS ");
       }
     }
   )
 
   .addAnswer(
-    "*Ingresa la cantidad de cuotas seleccionada en numeros, por favor. Ejemplo: 3*",
+    "📊 *Ingresa la cantidad de cuotas seleccionada en numeros, por favor. Ejemplo: 3*",
     { capture: true },
     async (ctx, { fallBack, flowDynamic, state }) => {
         const compra = state.get("venta");
@@ -331,19 +328,19 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
                 const importeEnLetras = numeroALetras(importeCompra); 
                 
                 await flowDynamic([{
-                    body: `*Confirmas la compra en comercio: ${compra.comercio.puntos[0].descrpto} por un importe de $${importeCompra} (${importeEnLetras}) en ${cuotasIngresadas} ${leyendaCuotas}*`
+                    body: `📝 *Confirmas la compra en comercio: ${compra.comercio.puntos[0].descrpto} por un importe de $${importeCompra} (${importeEnLetras}) en ${cuotasIngresadas} ${leyendaCuotas}*`
                 }]);
             } else {
-                return fallBack(`*La cantidad de cuotas ingresada no es válida. Por favor, elige entre las opciones disponibles: ${compra.opcionesCuotas.join(", ")}*`);
+                return fallBack(`❌ *La cantidad de cuotas ingresada no es válida. Por favor, elige entre las opciones disponibles: ${compra.opcionesCuotas.join(", ")}*`);
             }
         } else {
-            return fallBack("El numero de cuotas ingresado (" + ctx.body + ") no es válido !!! Por favor reingresalo.");
+            return fallBack("❌ El numero de cuotas ingresado (" + ctx.body + ") no es válido !!! Por favor reingresalo.");
         }
     }
 )
 
 .addAnswer(
-  "*Por último, para confirmar operación ingresa tu número de DNI. Solo números sin puntos*",
+  "🔒 *Por último, para confirmar operación ingresa tu número de DNI. Solo números sin puntos*",
   { capture: true },
   async (ctx, { fallBack, endFlow, flowDynamic, state, provider }) => {
     try {
@@ -367,37 +364,33 @@ const flowPagarCompras = addKeyword("COMPRA", "COMPRAR", { sensitive: false })
               cuotas: state.get("venta").cuotasSeleccionadas || 1,
               transaccionId: numAutorizacion,
              
-            
             };
-            
             
             const pdfPath = await generateTransactionPDF(transactionDetails);
             
-           
             await flowDynamic([
               {
-                body: "Transacción realizada con éxito. A continuación te envío el comprobante:",
+                body: "🎉 Transacción realizada con éxito. A continuación te envío el comprobante:",
                 media: pdfPath,
               }
             ]);
 
             state.clear();
-            return endFlow("¡Transacción completada! Tenes suerte, tenes DATA.");
+            return endFlow("✅ ¡Transacción completada! Tenes suerte, tenes DATA.");
           } else {
             return flowDynamic([{ body: result.message }]);
           }
         } else {
-          return fallBack("El número de DNI ingresado no coincide con nuestros registros, reinténtalo.");
+          return fallBack("❌ El número de DNI ingresado no coincide con nuestros registros, reinténtalo.");
         }
       } else {
-        return fallBack("El número ingresado no es válido, intenta nuevamente.");
+        return fallBack("❌ El número ingresado no es válido, intenta nuevamente.");
       }
     } catch (error) {
       emailLogger.error(error.stack);
-      return endFlow("Ocurrió un error al procesar la operación. Inténtalo más tarde.");
+      return endFlow("❌ Ocurrió un error. Inténtalo más tarde.");
     }
   }
-)
-
+);
 
 export default flowPagarCompras;

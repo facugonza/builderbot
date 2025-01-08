@@ -159,3 +159,4 @@ async function procesarCompra(cliente, state) {
   
 
   export { findComercio,findPlanActiveByComercio,procesarCompra};
+  
