@@ -31,6 +31,7 @@ import flowResumen from '../flows/flowResumen.js';
 import flowPrincipal from '../flows/flowPrincipal.js';
 import flowPrestamosCliente from '../flows/flowPrestamosCliente.js';
 import flowPagarCompra from "../flows/flowPagarCompra.js";
+import flowTest from "../flows/flowTest.js";
 
 import flowDisponible from "../flows/flowDisponible.js";
 import flowMovimientos from "../flows/flowCompras.js";
