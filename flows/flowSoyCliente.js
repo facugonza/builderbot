@@ -7,8 +7,8 @@ import flowDesvincular from "./flowDesvincular.js";
 import flowCompras from "./flowCompras.js";
 import flowLinkPagoMP from "./flowLinkPagoMP.js";
 import flowdePrestamos from "./flowPrestamosCliente.js";
-//import flowPagarCompra from "./flowPagarCompra.js";
-//import flowComprar from "./flowComprar.js";
+import flowPagarCompra from "./flowPagarCompra.js";
+
 
 async function tiempo() {
   //delay(3000);
@@ -47,7 +47,7 @@ const flowSoyCliente = addKeyword("SoyClientedeTarjetaDATA", {sensitive : false}
     }
 
   },
-  [flowDisponible,flowCompras,flowResumen,flowLinkPagoMP,flowAgente,flowPromociones,flowDesvincular,flowdePrestamos]
+  [flowDisponible,flowCompras,flowResumen,flowLinkPagoMP,flowAgente,flowPromociones,flowDesvincular,flowdePrestamos, flowPagarCompra]
   )
 
   export default flowSoyCliente;  
