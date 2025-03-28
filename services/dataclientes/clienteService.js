@@ -5,13 +5,15 @@ import axios from "axios";
 import { emailLogger} from '../../logger/logger.js';
 import { getClienteData} from "../../models/clienteDATA.js";
 import {setClienteData } from "../../models/clienteDATA.js";
+import redisClient from './redisClient.js'; 
 
 
 const API_URL_VERIFICAR_TELEFONO ="http://200.70.56.202:8080/AppMovil/Cliente?nroTelefono=";
 const API_URL_VERIFICAR_TELEFONO_BKP ="http://200.70.56.203:8021/AppMovil/Cliente?nroTelefono=";
-
+const CACHE_TTL = 300; // 5 minutos en segundos
 
 const isRegisterClient = async (phoneNumber) => {
+    
     try {
         var config = {
             method: "get",
@@ -31,10 +33,36 @@ const isRegisterClient = async (phoneNumber) => {
 
 const findCustomer = async (ctx) => {
     let cliente = getClienteData(ctx);
+   
+    //REDIS CODE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    const cacheKey = `cliente:${ctx.from}`;
+    
+    //REDIS CODE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    if (Object.keys(cliente).length === 0) {
+        try {
+            
+            const cachedData = await redisClient.get(cacheKey);
+
+            if (cachedData) {
+                console.log("Redis HIT para:", ctx.from);
+                cliente = JSON.parse(cachedData);
+                setClienteData(ctx, cliente);
+                return cliente;
+            }
+            console.log("Redis MISS para:", ctx.from);
+        } catch (err) {
+            console.error("Error al acceder a Redis:", err);
+            emailLogger.error("Error en Redis: " + err.stack);
+        }
+    }   
 
     // Función auxiliar para realizar la solicitud
     async function makeRequest(url) {
         try {
+
+            //REDIS CODE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            const cachedData = await redisClient.get(cacheKey);
+
             console.log("INTENTANDO OBTENER DATOS DEL CLIENTE DESDE... : "+ url + ctx.from);
             const config = {
                 method: "get",
@@ -45,7 +73,7 @@ const findCustomer = async (ctx) => {
             const response = await axios(config);
             return response.data;
         } catch (e) {
-            emailLogger.error("ERROR en makeRequest > " + e.stack);
+            emailLogger.error("ERROR en makeRequest > " + url + ctx.from + " " + e.stack);
             console.log(e);
             return null;
         }
@@ -63,6 +91,15 @@ const findCustomer = async (ctx) => {
         // Si se encontraron los datos del cliente y el cliente ha iniciado sesión, almacena los datos en el contexto
         if (cliente !=null && cliente.isLogin) {
             setClienteData(ctx, cliente);
+            
+            //REDIS CODE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            try {
+                await redisClient.setEx(cacheKey, CACHE_TTL, JSON.stringify(cliente));
+            } catch (err) {
+                console.error("Error al guardar en Redis:", err);
+                emailLogger.error("Error guardando datos en Redis: " + err.stack);
+            }
+            
         } else {
             cliente = {}; // Asegurarse de devolver un objeto vacío si no se encontraron datos
         }

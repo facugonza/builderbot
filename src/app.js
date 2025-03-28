@@ -35,6 +35,8 @@ import flowPagarCompra from "../flows/flowPagarCompra.js";
 import flowDisponible from "../flows/flowDisponible.js";
 import flowMovimientos from "../flows/flowCompras.js";
 import flowLinkPagoMP from "../flows/flowLinkPagoMP.js";
+import flowPagarD from "../flows/flowPagarD.js";
+import flowPagarV from "../flows/flowPagarV.js";
 
 //process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
 import https from 'https';
@@ -69,7 +71,7 @@ const main = async () => {
       });
     */
 
-    const adapterFlow = createFlow([flowMain,flowSoyCliente,flowResumen,flowNoSoyCliente,flowAltaCliente,flowValidarCliente,flowPrincipal,flowPrestamosCliente,flowPagarCompra,flowDisponible,flowLinkPagoMP,flowMovimientos])
+    const adapterFlow = createFlow([flowMain,flowSoyCliente,flowResumen,flowNoSoyCliente,flowAltaCliente,flowValidarCliente,flowPrincipal,flowPrestamosCliente,flowPagarCompra,flowDisponible,flowLinkPagoMP,flowPagarD, flowPagarV,flowMovimientos])
     //const adapterProvider = createProvider(BaileysProvider)
 
     const adapterProvider = createProvider(Provider)
