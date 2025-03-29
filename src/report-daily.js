@@ -36,7 +36,8 @@ function sendEmail() {
       SUM(accion = 'RESUMEN') AS 'Resumen_Count',
       SUM(accion = 'OPERADOR') AS 'Operador_Count',
       SUM(accion = 'PROMOS') AS 'Promos_Count',
-      SUM(accion = 'PAGAR') AS 'Pagar_Count',
+      SUM(accion = 'PAGARDATA') AS 'PagarData_Count',
+      SUM(accion = 'PAGARVISA') AS 'PagarVisa_Count',
       SUM(accion = 'SOLICITAR') AS 'Solicitar_Count',
       SUM(accion = 'REQUISITOS') AS 'Requisitos_Count',
       SUM(accion = 'MENU_NO_CLIENTE') AS 'No_Cliente_Count',
@@ -70,10 +71,10 @@ function sendEmail() {
 
       emailContent += '<h3>Resumen de palabras clave para el día actual:</strong></h3>';
       emailContent += '<table border="1" cellpadding="5" cellspacing="0">';
-      emailContent += '<tr><th>Saldo</th><th>Movimientos</th><th>Prestamo</th><th>Resumen</th><th>Operador</th><th>Promos</th><th>Pagar</th><th>Solicitar</th><th>Requisitos</th><th>No Cliente</th><th>Registros</th><th>Home</th></tr>';
+      emailContent += '<tr><th>Saldo</th><th>Movimientos</th><th>Prestamo</th><th>Resumen</th><th>Operador</th><th>Promos</th><th>PagarDATA</th><th>PagarVISA</th><th>Solicitar</th><th>Requisitos</th><th>No Cliente</th><th>Registros</th><th>Home</th></tr>';
     
       keywordResults.forEach(keywordRow => {
-        emailContent += `<tr><td>${keywordRow.Saldo_Count}</td><td>${keywordRow.Movimientos_Count}</td><td>${keywordRow.Prestamo_Count}</td><td>${keywordRow.Resumen_Count}</td><td>${keywordRow.Operador_Count}</td><td>${keywordRow.Promos_Count}</td><td>${keywordRow.Pagar_Count}</td><td>${keywordRow.Solicitar_Count}</td><td>${keywordRow.Requisitos_Count}</td><td>${keywordRow.No_Cliente_Count}</td><td>${keywordRow.Registros_Count}</td><td>${keywordRow.Home_Count}</td></tr>`;
+        emailContent += `<tr><td>${keywordRow.Saldo_Count}</td><td>${keywordRow.Movimientos_Count}</td><td>${keywordRow.Prestamo_Count}</td><td>${keywordRow.Resumen_Count}</td><td>${keywordRow.Operador_Count}</td><td>${keywordRow.Promos_Count}</td><td>${keywordRow.PagarData_Count}</td><td>${keywordRow.PagarVisa_Count}</td><td>${keywordRow.Solicitar_Count}</td><td>${keywordRow.Requisitos_Count}</td><td>${keywordRow.No_Cliente_Count}</td><td>${keywordRow.Registros_Count}</td><td>${keywordRow.Home_Count}</td></tr>`;
       });
 
       emailContent += '</table>';
@@ -88,20 +89,18 @@ function sendEmail() {
       emailContent += '</table>';
 
       const transporter = nodemailer.createTransport({
-        host: 'sd-1973625-l.dattaweb.com',
-        port: 587,
-        secure: false,
+        service: 'gmail',
         auth: {
-          user: 'facundogonzalez@tarjetadata.com.ar',
-          pass: 'Facundo2000@*',
+          user: 'databotnotificacion@gmail.com',
+          pass: 'uxdrvqmaulcytylz', 
         }
       });
 
       const todayDate = getFormattedDate();
       const mailOptions = {
-        from: 'facundogonzalez@tarjetadata.com.ar',
-        to: 'facugonza@gmail.com, luispalacio@tarjetadata.com.ar, gabrielperez@tarjetadata.com.ar',
-        subject: `Cantidad de Personas Atendidas hoy: (${todayDate})`,
+        from: 'databotnotificacion@gmail.com',
+        to: 'angelachacongonzalez@gmail.com, facugonza@gmail.com, luispalacio@tarjetadata.com.ar, gabrielperez@tarjetadata.com.ar, veronicaputelli@tarjetadata.com.ar',
+        subject: `Cantidad de Personas Atendidas hoy: (${todayDate})`, 
         html: emailContent,
       };
 
@@ -127,3 +126,5 @@ const job = schedule.scheduleJob(rule, () => {
 });
 
 console.log('Tarea programada para las 23:59 cada día.');
+
+//sendEmail();

@@ -14,15 +14,14 @@ log4js.configure({
         email: {
             type: '@log4js-node/smtp',
             recipients: 'facugonza@gmail.com',
-            sender: 'facundogonzalez@tarjetadata.com.ar',
+            sender: 'databotnotificacion@gmail.com',
             subject: 'ERROR GRAVE EN DATA BOT',
             SMTP: {
-                host: 'sd-1973625-l.dattaweb.com',
-                secure: true, // use SSL
-                port: 465,
-                auth: {
-                    user: 'facundogonzalez@tarjetadata.com.ar',
-                    pass: 'Facundo2000@*'
+                    
+                     service: 'gmail',
+                     auth: {
+                          user: 'databotnotificacion@gmail.com',
+                          pass: 'uxdrvqmaulcytylz', 
                 }
             }
         }

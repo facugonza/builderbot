@@ -1,11 +1,12 @@
 dist/*
 node_modules
 .env
-
+package-*.*
 *_sessions
 *tokens
 .wwebjs*
-
 *.log
+*.log.*
 *qr.png
 clientes
+databot

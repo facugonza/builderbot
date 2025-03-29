@@ -30,15 +30,14 @@ let lead = {
 
 async function sendEmail(files) {
   try {
-    const transporter = nodemailer.createTransport({
-      host: "sd-1973625-l.dattaweb.com", // Dirección del servidor SMTP
-      port: 587, // Puerto (puede ser 25, 465, 587, dependiendo de tu servidor)
-      secure: false, // true para 465, false para otros puertos
-      auth: {
-        user: "facundogonzalez@tarjetadata.com.ar",
-        pass: "Facundo2000@*",
-      },
-    });
+
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: 'databotnotificacion@gmail.com',
+          pass: 'uxdrvqmaulcytylz', 
+        }
+      });    
 
     const attachments = files.map((file) => ({
       filename: file.name,
@@ -55,7 +54,7 @@ async function sendEmail(files) {
     Además, se adjunta la documentación del cliente.`;
 
     const mailOptions = {
-      from: "facundogonzalez@tarjetadata.com.ar",
+      from: "databotnotificacion@gmail.com",
       to: "luispalacio@tarjetadata.com.ar, GABRIELPEREZ@tarjetadata.com.ar, facugonza@gmail.com, angelachacon@gmail.com",
       subject: "Solicitud de apertura de Cuenta - DNI: "+ lead.dni,
       html: bodyHtml,

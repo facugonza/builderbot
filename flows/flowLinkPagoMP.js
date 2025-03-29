@@ -1,82 +1,52 @@
 import { addKeyword } from '@builderbot/bot';
-import { getClienteData, setClienteData } from "../models/clienteDATA.js";
-import { logger, emailLogger } from '../logger/logger.js';
-//import createPaymentLink from "../linkpago/mercadopago.js";
 import { findCustomer } from "../services/dataclientes/clienteService.js";
 import databaseLogger from '../logger/databaseLogger.js';
 import acciones from '../models/acciones.js';
+import flowPagarD from './flowPagarD.js';
+import flowPagarV from './flowPagarV.js';
 
+const flowLinkPagoMP = addKeyword("pagar", { sensitive: false })
+  .addAnswer(".", { delay: 1000 }, async (ctx, { flowDynamic, endFlow, gotoFlow }) => {
+    databaseLogger.addLog(ctx.from, acciones.PAGAR);
 
-function extractImportFromBarCode(barcode) {
-    if (barcode) {
-        const importPart = barcode.slice(-10, -2);
-        logger.info(importPart);
-        return parseFloat(importPart) / 100;
-    } else {
-        logger.error("Barcode is undefined or null");
-        return null; // Otra acción adecuada en caso de que barcode sea indefinido o nulo
+    const cliente = await findCustomer(ctx);
+
+    if (!cliente || Object.keys(cliente).length === 0) {
+      return endFlow("❌ No se encontró información del cliente.");
     }
-}
-const generatePayLinkVisa = async (amount,description,indentifier) => {
-    // Crear el cuerpo del payload como un objeto válido
-    const datosPago = {
-      collector_cuit: "20322678275",
-      collector_branchOffice: "3242",
-      description: "Pago de Tarjeta DATA-VISA",
-      totalAmount: amount, // Usamos el monto dinámico recibido como parámetro
-      currency: "ARS",
-      channel: 2,
-      //expirationDate: "2025-11-09T15:20:00.0000000", // Fecha de expiración
-      //successUrl: "https://home.tarjetadata.com.ar/", // URL en caso de éxito
-      //errorUrl: "https://home.tarjetadata.com.ar/error", // URL en caso de error
-      clientReference: indentifier, // Referencia única del cliente
-      items: [
+
+    if (cliente.hasVisaSummary) {
+      await flowDynamic([
         {
-          amount: amount.toFixed(2), // Convertimos el monto a string con 2 decimales
-          description: description,
-          quantity: "1", // Cantidad fija
+          body: "Genial! ¿Qué tarjeta querés pagar?\n👉 Escribí *PAGARD* para Tarjeta DATA\n👉 Escribí *PAGARV* para Tarjeta VISA",
         },
-      ],
-    };
-  
-    try {
-      const config = {
-        method: "POST",
-        url: "https://pruebas.tarjetadata.com.ar/restbind/servicios/bind/boton/simple/pago",
-        headers: {
-          "Content-Type": "application/json",
-          "Idaplicacion": "4", // ID de la aplicación (CHATBOT-VISA-DATA)
-        },
-        data: JSON.stringify(datosPago), // Serializamos el cuerpo del payload
-      };
-  
-      // Realizar la solicitud a la API
-      const response = await axios(config);
-  
-      // Validar y retornar la respuesta
-      if (response.data?.url) {
-        console.log("Link generado correctamente:", response.data.url);
-        return response.data.url;
-      } else {
-        console.error("Error en la respuesta de la API:", response.data);
-        return null;
-      }
-    } catch (error) {
-      console.error("Error generando el link de pago VISA:", error.message);
-      if (error.response) {
-        console.error("Detalles del error:", error.response.data);
-      }
-      return null;
+      ]);
+      return; 
     }
-  };
-  
-  
-function formatFechaResumen(dateString) {
-    return dateString.replace(/\/\//g, '-');
-}
 
-const flowLinkPagoMP = addKeyword("pagar", {sensitive : false})
-.addAnswer(".", {delay : 1000},
+    
+    return gotoFlow(flowPagarD);
+  })
+
+  
+  .addAnswer(null, { capture: true }, async (ctx, { gotoFlow, fallBack }) => {
+    const opcion = ctx.body.trim().toLowerCase();
+    
+    if (opcion === "pagard") {      
+      return gotoFlow(flowPagarD);
+    }
+
+    if (opcion === "pagarv") {
+      return gotoFlow(flowPagarV);
+    }
+
+    return fallBack("⚠️ Opción inválida. Escribí *PAGARD* o *PAGARV* para continuar.");
+  });
+
+export default flowLinkPagoMP;
+
+
+/*.addAnswer(".", {delay : 1000},
   async(ctx,{endFlow,flowDynamic} ) => {
     
     databaseLogger.addLog(
@@ -134,11 +104,11 @@ const flowLinkPagoMP = addKeyword("pagar", {sensitive : false})
                 const messagesVISALinkPays = [];  
 
                 if (cliente.minvisaamonut){
-                    const payLinkMin   = generatePayLinkVisa(cliente.minvisaamonut,"Pago Minimo DATA VISA",cliente.minvisaamonutidentifier);        
+                    const payLinkMin   = cliente.minvisalinkpay;
                     messagesVISALinkPays.push({ body: `🔗 *Abre este enlace para el PAGO MINIMO de Tarjeta DATA VISA $ ${cliente.minvisaamonut} >* ${payLinkMin}` });
                 }
                 if (cliente.totalvisaamonut){
-                    const payLinkTotal =  generatePayLinkVisa(cliente.totalvisaamonut,"Pago Total DATA VISA",cliente.totalvisaamonutidentifier);     
+                    const payLinkTotal =  cliente.totalvisalinkpay;     
                     messagesVISALinkPays.push({ body: `🔗 *Abre este enlace para el PAGO TOTAL de Tarjeta DATA VISA $ ${cliente.totalvisaamonut} >* ${payLinkTotal}` });
                 }                
                 if(messagesVISA.length > 0){
@@ -157,4 +127,4 @@ const flowLinkPagoMP = addKeyword("pagar", {sensitive : false})
   }
 );
 
-export default flowLinkPagoMP; 
+export default flowLinkPagoMP; */

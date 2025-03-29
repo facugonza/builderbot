@@ -9,6 +9,7 @@ import acciones from '../models/acciones.js';
 function isWithinWorkingHours() {
   const currentHour = new Date().getHours();
   
+
   // Nueva franja horaria: 08:00 a 21:00
   const isWithinNewHours = currentHour >= 8 && currentHour < 21;
 
